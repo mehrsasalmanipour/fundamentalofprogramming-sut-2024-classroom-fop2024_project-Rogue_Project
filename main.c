@@ -1,5 +1,9 @@
 #include <ncurses.h>
 #include <string.h>
+#include <ctype.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
 #include "functions.h"
 
 int main() {
@@ -20,16 +24,12 @@ int main() {
         int choice = mainMenu();
         if (choice == 0) {
             clear();
-            mvprintw(LINES / 2, COLS / 2 - 10, "Signing up...");
-            refresh();
-            getch();
-            playerIsRegistered = 1;
+            signUp();
         } else if (choice == 1) {
             clear();
             mvprintw(LINES / 2, COLS / 2 - 10, "Logging in...");
             refresh();
             getch();
-            playerIsRegistered = 1;
         } else if (choice == 2) {
             //code
         } else if (choice == 3) {
@@ -37,11 +37,6 @@ int main() {
         } else if (choice == 4) {
             //code
         } else if (choice == 5) {
-            break;
-        }
-
-        if (playerIsRegistered) {
-            startGame();
             break;
         }
     }
