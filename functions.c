@@ -25,7 +25,7 @@ void drawMenu(const char *menuItems[], int menuSize, int highlight) {
 }
 
 int mainMenu() {
-    const char *menuItems[] = {"Sign Up", "Log In", "Top Players", "New Game", "Continue" "Settings", "Exit"};
+    const char *menuItems[] = {"Sign Up", "Log In", "Play as Guest", "Exit"};
     const int menuSize = sizeof(menuItems) / sizeof(menuItems[0]);
     int highlight = 0;
     int ch;
@@ -139,7 +139,7 @@ void signUp() {
     char username[MAX], email[MAX], password[MAX];
     FILE *file = fopen("players.txt", "a");
     if (file == NULL) {
-        displayError(LINES - 2, 0, "error opening file.");
+        displayError(LINES - 2, 0, "Error opening file.");
         getch();
         return;
     }
@@ -181,5 +181,42 @@ void signUp() {
 
     mvprintw(15, 10, "Sign Up successful!");
     refresh();
+    getch();
+}
+
+void login() {
+    char username[MAX], password[MAX];
+    char fileUsername[MAX], fileEmail[MAX], filePassword[MAX];
+    FILE *file = fopen("players.txt", "r");
+    if (file == NULL) {
+        displayError(5, 10, "Error opening file.");
+        getch();
+        return;
+    }
+
+    clear();
+    mvprintw(5, 10, "Enter Username: ");
+    refresh();
+    getInputWithDisplay(5, 26, username, MAX);
+
+    mvprintw(7, 10, "Enter Password: ");
+    refresh();
+    getInputWithDisplay(7, 26, password, MAX);
+
+    bool loginSuccess = false;
+    while (fscanf(file, "%s %s %s", fileUsername, fileEmail, filePassword) != EOF) {
+        if (strcmp(username, fileUsername) == 0 && strcmp(password, filePassword) == 0) {
+            loginSuccess = true;
+            break;
+        }
+    }
+    fclose(file);
+
+    if (loginSuccess) {
+        mvprintw(9, 10, "Login successful! Welcome, %s!", username);
+        refresh();
+    } else {
+        displayError(9, 10, "Invalid username or password.");
+    }
     getch();
 }
