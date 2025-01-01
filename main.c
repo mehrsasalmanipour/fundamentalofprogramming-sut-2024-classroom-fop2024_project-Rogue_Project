@@ -27,16 +27,10 @@ int main() {
             signUp();
         } else if (choice == 1) {
             clear();
-            mvprintw(LINES / 2, COLS / 2 - 10, "Logging in...");
-            refresh();
-            getch();
+            login();
         } else if (choice == 2) {
             //code
         } else if (choice == 3) {
-            //code
-        } else if (choice == 4) {
-            //code
-        } else if (choice == 5) {
             break;
         }
     }
