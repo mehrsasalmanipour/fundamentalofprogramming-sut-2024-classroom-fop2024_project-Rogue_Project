@@ -9,5 +9,6 @@ bool isUsernameTaken(const char *username);
 void displayError(int row, int col, const char *message);
 void getInputWithDisplay(int y, int x, char *input, int maxLen);
 void signUp();
+void login();
 
 #endif
