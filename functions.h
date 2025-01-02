@@ -8,7 +8,8 @@ bool isValidEmail(const char *email);
 bool isUsernameTaken(const char *username);
 void displayError(int row, int col, const char *message);
 void getInputWithDisplay(int y, int x, char *input, int maxLen);
-void signUp();
-void login();
+int signUp();
+int login();
+void pregameMenu();
 
 #endif
