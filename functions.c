@@ -258,7 +258,7 @@ int login() {
 }
 
 void pregameMenu() {
-    const char *menuItems[] = {"Save Game", "New Game", "Continue Previous Games", "Top Players", "Settings", "Music", "Back"};
+    const char *menuItems[] = {"Save Game", "New Game", "Continue Previous Games", "Top Players", "Settings", "Back"};
     const int menuSize = sizeof(menuItems) / sizeof(menuItems[0]);
     int highlight = 0;
     int ch;
@@ -286,8 +286,6 @@ void pregameMenu() {
             } else if (highlight == 4) {
                 //code
             } else if (highlight == 5) {
-                //code
-            } else if (highlight == 6) {
                 return;
             }
             break;
