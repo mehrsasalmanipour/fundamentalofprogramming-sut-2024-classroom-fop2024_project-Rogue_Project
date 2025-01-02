@@ -144,13 +144,13 @@ void getInputWithDisplay(int y, int x, char *input, int maxLen) {
     }
 }
 
-void signUp() {
+int signUp() {
     char username[MAX], email[MAX], password[MAX];
     FILE *file = fopen("players.txt", "a");
     if (file == NULL) {
         displayError(LINES - 2, 0, "Error opening file.");
         getch();
-        return;
+        return 0;
     }
 
     while (1) {
@@ -161,7 +161,7 @@ void signUp() {
         clrtoeol();
         if (strcmp(username, "back") == 0) {
             fclose(file);
-            return;
+            return 0;
         }
         if (isUsernameTaken(username)) {
             displayError(7, 10, "Username already taken!");
@@ -178,7 +178,7 @@ void signUp() {
         getInputWithDisplay(8, 60, email, MAX);
         if (strcmp(email, "back") == 0) {
             fclose(file);
-            return;
+            return 0;
         }
         if (!isValidEmail(email)) {
             displayError(10, 10, "Invalid email format!");
@@ -195,7 +195,7 @@ void signUp() {
         getInputWithDisplay(11, 60, password, MAX);
         if (strcmp(password, "back") == 0) {
             fclose(file);
-            return;
+            return 0;
         }
         if (!isValidPassword(password)) {
             displayError(13, 10, "Password must be 7+ characters with a number, uppercase and lowercase");
@@ -204,7 +204,6 @@ void signUp() {
         }
         break;
     }
-
     fprintf(file, "%s %s %s\n", username, email, password);
     fclose(file);
     attron(COLOR_PAIR(3));
@@ -212,16 +211,18 @@ void signUp() {
     attroff(COLOR_PAIR(3));
     refresh();
     getch();
+
+    return 1;
 }
 
-void login() {
+int login() {
     char username[MAX], password[MAX];
     char fileUsername[MAX], fileEmail[MAX], filePassword[MAX];
     FILE *file = fopen("players.txt", "r");
     if (file == NULL) {
         displayError(5, 10, "Error opening file.");
         getch();
-        return;
+        return 0;
     }
 
     clear();
@@ -247,8 +248,49 @@ void login() {
         mvprintw(9, 10, "Login successful! Welcome, %s!", username);
         attroff(COLOR_PAIR(3));
         refresh();
+        getch();
+        return 1;
     } else {
         displayError(9, 10, "Invalid username or password.");
+        getch();
+        return 0;
     }
-    getch();
+}
+
+void pregameMenu() {
+    const char *menuItems[] = {"Save Game", "New Game", "Continue Previous Games", "Top Players", "Settings", "Music", "Back"};
+    const int menuSize = sizeof(menuItems) / sizeof(menuItems[0]);
+    int highlight = 0;
+    int ch;
+
+    while (1) {
+        drawMenu(menuItems, menuSize, highlight);
+
+        ch = getch();
+        switch (ch) {
+        case KEY_UP:
+            highlight = (highlight - 1 + menuSize) % menuSize;
+            break;
+        case KEY_DOWN:
+            highlight = (highlight + 1) % menuSize;
+            break;
+        case 10:
+            if (highlight == 0) {
+                //code
+            } else if (highlight == 1) {
+                //code
+            } else if (highlight == 2) {
+                //code
+            } else if (highlight == 3) {
+                //code
+            } else if (highlight == 4) {
+                //code
+            } else if (highlight == 5) {
+                //code
+            } else if (highlight == 6) {
+                return;
+            }
+            break;
+        }
+    }
 }
