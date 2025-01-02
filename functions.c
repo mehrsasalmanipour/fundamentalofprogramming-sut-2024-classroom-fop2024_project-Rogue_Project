@@ -121,7 +121,7 @@ void getInputWithDisplay(int y, int x, char *input, int maxLen) {
                 attroff(COLOR_PAIR(2));
                 refresh();
                 getch();
-                mvprintw(y + 1, x, "                       ");
+                mvprintw(y + 2, x, "                       ");
                 move(y, x);
                 refresh();
                 continue;
