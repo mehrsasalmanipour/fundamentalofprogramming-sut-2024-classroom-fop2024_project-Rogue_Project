@@ -98,7 +98,13 @@ bool isUsernameTaken(const char *username) {
 }
 
 void displayError(int row, int col, const char *message) {
+    attron(COLOR_PAIR(2));
     mvprintw(row, col, "Error: %s", message);
+    attroff(COLOR_PAIR(2));
+    refresh();
+    getch();
+    mvprintw(row, col, "                                         ");
+    
     refresh();
 }
 
@@ -109,11 +115,14 @@ void getInputWithDisplay(int y, int x, char *input, int maxLen) {
     while (1) {
         ch = getch();
         if (ch == '\n' || ch == '\r') {
-            if (i == 0) {
-                mvprintw(y + 1, x, "Input cannot be empty!");
+            if (i == 0) {\
+                attron((COLOR_PAIR(2)));
+                mvprintw(y + 2, x, "Input cannot be empty!");
+                attroff(COLOR_PAIR(2));
                 refresh();
                 getch();
-                mvprintw(y + 1, x, "                      ");
+                mvprintw(y + 1, x, "                       ");
+                move(y, x);
                 refresh();
                 continue;
             }
@@ -122,16 +131,16 @@ void getInputWithDisplay(int y, int x, char *input, int maxLen) {
         } else if (ch == KEY_BACKSPACE || ch == 127) {
             if (i > 0) {
                 i--;
+                input[i] = '\0';
                 mvaddch(y, x + i, ' ');
                 move(y, x + i);
-                clrtoeol();
                 refresh();
             }
         } else if (i < maxLen - 1 && isprint(ch)) {
             input[i++] = ch;
-            mvaddch(y, x + i, ch);
+            mvaddch(y, x + i - 1, ch);
+            refresh();
         }
-        refresh();
     }
 }
 
@@ -144,42 +153,63 @@ void signUp() {
         return;
     }
 
-    clear();
-    mvprintw(5, 10, "Enter Username: ");
-    refresh();
-    getInputWithDisplay(5, 25, username, MAX);
-    if (isUsernameTaken(username)) {
-        displayError(7, 10, "Username already taken!");
-        getch();
-        fclose(file);
-        return;
-    }
-
-    mvprintw(8, 10, "Enter Email: ");
-    refresh();
-    getInputWithDisplay(8, 25, email, MAX);
-    if (!isValidEmail(email)) {
-        displayError(10, 10, "Invalid email format!");
-        getch();
-        fclose(file);
-        return;
-    }
-
-    mvprintw(11, 10, "Enter Password: ");
-    refresh();
-    getInputWithDisplay(11, 25, password, MAX);
-    if (!isValidPassword(password)) {
-        displayError(13, 10, "Password must be 7+ characters with a number, uppercase and lowercase");
+    while (1) {
+        clear();
+        mvprintw(5, 10, "Enter Username (or type 'back' to return): ");
         refresh();
-        getch();
-        fclose(file);
-        return;
+        getInputWithDisplay(5, 60, username, MAX);
+        clrtoeol();
+        if (strcmp(username, "back") == 0) {
+            fclose(file);
+            return;
+        }
+        if (isUsernameTaken(username)) {
+            displayError(7, 10, "Username already taken!");
+            getch();
+            continue;
+        }
+        break;
+    }
+
+    while (1) {
+        mvprintw(8, 10, "Enter Email (or type 'back' to return): ");
+        clrtoeol();
+        refresh();
+        getInputWithDisplay(8, 60, email, MAX);
+        if (strcmp(email, "back") == 0) {
+            fclose(file);
+            return;
+        }
+        if (!isValidEmail(email)) {
+            displayError(10, 10, "Invalid email format!");
+            getch();
+            continue;
+        }
+        break;
+    }
+
+    while (1) {
+        mvprintw(11, 10, "Enter Password (or type 'back' to return): ");
+        clrtoeol();
+        refresh();
+        getInputWithDisplay(11, 60, password, MAX);
+        if (strcmp(password, "back") == 0) {
+            fclose(file);
+            return;
+        }
+        if (!isValidPassword(password)) {
+            displayError(13, 10, "Password must be 7+ characters with a number, uppercase and lowercase");
+            getch();
+            continue;
+        }
+        break;
     }
 
     fprintf(file, "%s %s %s\n", username, email, password);
     fclose(file);
-
+    attron(COLOR_PAIR(3));
     mvprintw(15, 10, "Sign Up successful!");
+    attroff(COLOR_PAIR(3));
     refresh();
     getch();
 }
@@ -213,7 +243,9 @@ void login() {
     fclose(file);
 
     if (loginSuccess) {
+        attron(COLOR_PAIR(3));
         mvprintw(9, 10, "Login successful! Welcome, %s!", username);
+        attroff(COLOR_PAIR(3));
         refresh();
     } else {
         displayError(9, 10, "Invalid username or password.");
