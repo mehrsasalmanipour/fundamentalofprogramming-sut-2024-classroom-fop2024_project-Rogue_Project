@@ -23,17 +23,22 @@ int main() {
     int playerIsRegistered = 0;
 
     while (1) {
-        int choice = mainMenu();
-        if (choice == 0) {
+        int mainChoice = mainMenu();
+        if (mainChoice == 0) {
             clear();
-            signUp();
-        } else if (choice == 1) {
+            playerIsRegistered = signUp();
+        } else if (mainChoice == 1) {
             clear();
-            login();
-        } else if (choice == 2) {
+            playerIsRegistered = login();
+        } else if (mainChoice == 2) {
             //code
-        } else if (choice == 3) {
+        } else if (mainChoice == 3) {
             break;
+        }
+
+        if (playerIsRegistered) {
+            clear();
+            pregameMenu();
         }
     }
 
