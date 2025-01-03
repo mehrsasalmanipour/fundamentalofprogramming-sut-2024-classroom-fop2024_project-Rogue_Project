@@ -4,9 +4,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <time.h>
 #include "functions.h"
 
 #define MAX 100
+#define MAP_WIDTH 50
+#define MAP_HEIGHT 20
+#define ROOM_MIN_SIZE 4
+#define ROOM_MAX_SIZE 8
+#define MIN_ROOMS 6
+#define MAX_ROOMS 8
 
 void drawMenu(const char *menuItems[], int menuSize, int highlight) {
     clear();
@@ -278,7 +285,12 @@ void pregameMenu() {
             if (highlight == 0) {
                 //code
             } else if (highlight == 1) {
-                //code
+                GameState game;
+                initializeMap(&game);
+                generateRooms(&game);
+                addDoors(&game);
+                generateCorridors(&game);
+                checkMap(&game);
             } else if (highlight == 2) {
                 //code
             } else if (highlight == 3) {
@@ -292,3 +304,312 @@ void pregameMenu() {
         }
     }
 }
+
+void initializeMap(GameState *game) {
+    for (int y = 0; y < MAP_HEIGHT; y++) {
+        for (int x = 0; x < MAP_WIDTH; x++) {
+            game->tiles[y][x] = ' ';
+            game->visited[y][x] = false;
+        }
+    }
+}
+
+bool isOverlapping(Room *a, Room *b) {
+    return !(a->x + a->width < b->x || b->x + b->width < a->x || a->y + a->height < b->y || b->y + b->height < a->y);
+}
+
+void generateRooms(GameState *game) {
+    game->roomCount = 0;
+    while (game->roomCount < MAX_ROOMS) {
+        int width = rand() % (ROOM_MAX_SIZE - ROOM_MIN_SIZE + 1) + ROOM_MIN_SIZE;
+        int height = rand() % (ROOM_MAX_SIZE - ROOM_MIN_SIZE + 1) + ROOM_MIN_SIZE;
+        int x = rand() % (MAP_WIDTH - width - 1) + 1;
+        int y = rand() % (MAP_HEIGHT - height - 1) + 1;
+
+        Room newRoom = {x, y, width, height, {0}, {0}, 0};
+        bool overlaps = false;
+
+        for (int i = 0; i < game->roomCount; i++) {
+            if (isOverlapping(&newRoom, &game->rooms[i])) {
+                overlaps = true;
+                break;
+            }
+        }
+        if (!overlaps) {
+            game->rooms[game->roomCount++] = newRoom;
+            for (int j = y; j < y + height; j++) {
+                for (int k = x; k < x + width; k++) {
+                    if (j == y || j == y + height - 1) {
+                        game->tiles[j][k] = '-';
+                    } else if (k == x || k == x + width - 1) {
+                        game->tiles[j][k] = '|';
+                    } else {
+                        game->tiles[j][k] = '.';
+                    }
+                }
+            }
+        }
+    }
+    // Debug: Print room details
+    for (int i = 0; i < game->roomCount; i++) {
+        Room *room = &game->rooms[i];
+        printf("Room %d: (%d, %d), Size: %d x %d\n", i + 1, room->x, room->y, room->width, room->height);
+    }
+}
+
+void addDoors(GameState *game) {
+    for (int i = 0; i < game->roomCount; i++) {
+        Room *room = &game->rooms[i];
+        int numDoors = rand() % 3 + 1;
+
+        for (int j = 0; j < numDoors; j++) {
+            int wall = rand() % 4;
+            int doorX = 0, doorY = 0;
+            bool validDoor = false;
+
+            while (!validDoor) {
+                if (wall == 0 && room->y > 1) {
+                    doorX = rand() % (room->width - 2) + room->x + 1;
+                    doorY = room->y;
+                    validDoor = true;
+                } else if (wall == 1 && room->y + room->height < MAP_HEIGHT - 1) {
+                    doorX = rand() % (room->width - 2) + room->x + 1;
+                    doorY = room->y + room->height - 1;
+                    validDoor = true;
+                } else if (wall == 2 && room->x > 1) {
+                    doorX = room->x;
+                    doorY = rand() % (room->height - 2) + room->y + 1;
+                    validDoor = true;
+                } else if (wall == 3 && room->x + room->width < MAP_WIDTH - 1) {
+                    doorX = room->x + room->width - 1;
+                    doorY = rand() % (room->height - 2) + room->y + 1;
+                    validDoor = true;
+                } else {
+                    wall = rand() % 4;
+                }
+            }
+            
+            room->doorsX[room->doorCount] = doorX;
+            room->doorsY[room->doorCount] = doorY;
+            room->doorCount++;
+            game->tiles[doorY][doorX] = '+';
+        }
+    }
+
+    // Debug: Print door details
+    for (int i = 0; i < game->roomCount; i++) {
+        Room *room = &game->rooms[i];
+        for (int j = 0; j < room->doorCount; j++) {
+            printf("Room %d Door %d: (%d, %d)\n", i + 1, j + 1, room->doorsX[j], room->doorsY[j]);
+        }
+    }
+}
+
+void generateCorridors(GameState *game) {
+    for (int i = 1; i < game->roomCount; i++) {
+        Room *currentRoom = &game->rooms[i - 1];
+        Room *nextRoom = &game->rooms[i];
+
+        int currentDoorIndex = rand() % currentRoom->doorCount;
+        int currentDoorX = currentRoom->doorsX[currentDoorIndex];
+        int currentDoorY = currentRoom->doorsY[currentDoorIndex];
+
+        int nextDoorIndex = rand() % nextRoom->doorCount;
+        int nextDoorX = nextRoom->doorsX[nextDoorIndex];
+        int nextDoorY = nextRoom->doorsY[nextDoorIndex];
+
+        int cx = currentDoorX, cy = currentDoorY;
+
+        // Debug: Print corridor generation details
+        printf("Generating corridor from (%d, %d) to (%d, %d)\n", currentDoorX, currentDoorY, nextDoorX, nextDoorY);
+
+        // Generate a horizontal corridor
+        while (cx != nextDoorX) {
+            if (cx < nextDoorX) {
+                cx++;
+            } else {
+                cx--;
+            }
+            if (game->tiles[cy][cx] == ' ') {
+                game->tiles[cy][cx] = '#';
+            }
+        }
+
+        // Generate a vertical corridor
+        while (cy != nextDoorY) {
+            if (cy < nextDoorY) {
+                cy++;
+            } else {
+                cy--;
+            }
+            if (game->tiles[cy][cx] == ' ') {
+                game->tiles[cy][cx] = '#';
+            }
+        }
+
+        // Ensure doors are properly marked
+        game->tiles[currentDoorY][currentDoorX] = '+';
+        game->tiles[nextDoorY][nextDoorX] = '+';
+    }
+}
+
+void checkMap(GameState *game) {
+    clear();
+    for (int y = 0; y < MAP_HEIGHT; y++) {
+        for (int x = 0; x < MAP_WIDTH; x++) {
+            mvaddch(y, x, game->tiles[y][x]);
+        }
+    }
+    mvprintw(MAP_HEIGHT + 1, 0, "Total Rooms: %d", game->roomCount);
+    for (int i = 0; i < game->roomCount; i++) {
+        Room *room = &game->rooms[i];
+        mvprintw(MAP_HEIGHT + 2 + i, 0, "Room %d: (%d, %d), Size: %d x %d", i + 1, room->x, room->y, room->width, room->height);
+    }
+    refresh();
+    getch();
+}
+
+/*void initializeMap(GameState *game) {
+    for (int y = 0; y < MAP_HEIGHT; y++) {
+        for (int x = 0; x < MAP_WIDTH; x++) {
+            game->tiles[y][x] = ' ';
+            game->visited[y][x] = false;
+        }
+    }
+}
+
+bool isOverlapping(Room *a, Room *b) {
+    return !(a->x + a->width < b->x || b->x + b->width < a->x || a->y + a->height < b->y || b->y + b->height < a->y);
+}
+
+void generateRooms(GameState *game) {
+    game->roomCount = 0;
+    while (game->roomCount < MAX_ROOMS) {
+        int width = rand() % (ROOM_MAX_SIZE - ROOM_MIN_SIZE + 1) + ROOM_MIN_SIZE;
+        int height = rand() % (ROOM_MAX_SIZE - ROOM_MIN_SIZE + 1) + ROOM_MIN_SIZE;
+        int x = rand() % (MAP_WIDTH - width - 1) + 1;
+        int y = rand() % (MAP_HEIGHT - height - 1) + 1;
+
+        Room newRoom = {x, y, width, height, {0}, {0}, 0};
+        bool overlaps = false;
+
+        for (int i = 0; i < game->roomCount; i++) {
+            if (isOverlapping(&newRoom, &game->rooms[i])) {
+                overlaps = true;
+                break;
+            }
+        }
+        if (!overlaps) {
+            game->rooms[game->roomCount++] = newRoom;
+            for (int j = y; j < y + height; j++) {
+                for (int k = x; k < x + width; k++) {
+                    if (j == y || j == y + height - 1) {
+                        game->tiles[j][k] = '-';
+                    } else if (k == x || k == x + width - 1) {
+                        game->tiles[j][k] = '|';
+                    } else {
+                        game->tiles[j][k] = '.';
+                    }
+                }
+            }
+        }
+    }
+}
+
+void addDoors(GameState *game) {
+    for (int i = 0; i < game->roomCount; i++) {
+        Room *room = &game->rooms[i];
+        int numDoors = rand() % 3 + 1;
+
+        for (int j = 0; j < numDoors; j++) {
+            int wall = rand() % 4;
+            int doorX = 0, doorY = 0;
+            bool validDoor = false;
+
+            while (!validDoor) {
+                if (wall == 0 && room->y > 1) {
+                    doorX = rand() % (room->width - 2) + room->x + 1;
+                    doorY = room->y;
+                    validDoor = true;
+                } else if (wall == 1 && room->y + room->height < MAP_HEIGHT - 1) {
+                    doorX = rand() % (room->width - 2) + room->x + 1;
+                    doorY = room->y + room->height - 1;
+                    validDoor = true;
+                } else if (wall == 2 && room->x > 1) {
+                    doorX = room->x;
+                    doorY = rand() % (room->height - 2) + room->y + 1;
+                    validDoor = true;
+                } else if (wall == 3 && room->x + room->width < MAP_WIDTH - 1) {
+                    doorX = room->x + room->width - 1;
+                    doorY = rand() % (room->height - 2) + room->y + 1;
+                } else {
+                    wall = rand() % 4;
+                }
+            }
+            
+            room->doorsX[room->doorCount] = doorX;
+            room->doorsY[room->doorCount] = doorY;
+            room->doorCount++;
+            game->tiles[doorY][doorX] = '+';
+        }
+    }
+}
+
+void generateCorridors(GameState *game) {
+    for (int i = 1; i < game->roomCount; i++) {
+        Room *currentRoom = &game->rooms[i - 1];
+        Room *nextRoom = &game->rooms[i];
+
+        int currentDoorIndex = rand() % currentRoom->doorCount;
+        int currentDoorX = currentRoom->doorsX[currentDoorIndex];
+        int currentDoorY = currentRoom->doorsY[currentDoorIndex];
+
+        int nextDoorIndex = rand() % nextRoom->doorCount;
+        int nextDoorX = nextRoom->doorsX[nextDoorIndex];
+        int nextDoorY = nextRoom->doorsY[nextDoorIndex];
+
+        int cx = currentDoorX, cy = currentDoorY;
+
+        // Generate a horizontal corridor
+        while (cx != nextDoorX) {
+            if (cx < nextDoorX) {
+                cx++;
+            } else {
+                cx--;
+            }
+            if (game->tiles[cy][cx] == ' ') {
+                game->tiles[cy][cx] = '#';
+            }
+        }
+
+        // Generate a vertical corridor
+        while (cy != nextDoorY) {
+            if (cy < nextDoorY) {
+                cy++;
+            } else {
+                cy--;
+            }
+            if (game->tiles[cy][cx] == ' ') {
+                game->tiles[cy][cx] = '#';
+            }
+        }
+    }
+}
+
+
+
+void checkMap(GameState *game) {
+    clear();
+    for (int y = 0; y < MAP_HEIGHT; y++) {
+        for (int x = 0; x < MAP_WIDTH; x++) {
+            mvaddch(y, x, game->tiles[y][x]);
+        }
+    }
+    mvprintw(MAP_HEIGHT + 1, 0, "Total Rooms: %d", game->roomCount);
+    for (int i = 0; i < game->roomCount; i++) {
+        Room *room = &game->rooms[i];
+        mvprintw(MAP_HEIGHT + 2 + i, 0, "Room %d: (%d, %d), Size: %d x %d", i + 1, room->x, room->y, room->width, room->height);
+    }
+    refresh();
+    getch();
+}*/
