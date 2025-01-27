@@ -7,13 +7,6 @@
 #include <time.h>
 #include "functions.h"
 
-#define MAX 100
-#define MAP_WIDTH 50
-#define MAP_HEIGHT 20
-#define ROOM_MIN_SIZE 4
-#define ROOM_MAX_SIZE 8
-#define MIN_ROOMS 6
-#define MAX_ROOMS 8
 
 void drawMenu(const char *menuItems[], int menuSize, int highlight) {
     clear();
@@ -286,11 +279,7 @@ void pregameMenu() {
                 //code
             } else if (highlight == 1) {
                 GameState game;
-                initializeMap(&game);
-                generateRooms(&game);
-                addDoors(&game);
-                generateCorridors(&game);
-                checkMap(&game);
+                gameloop(&game);
             } else if (highlight == 2) {
                 //code
             } else if (highlight == 3) {
@@ -305,6 +294,8 @@ void pregameMenu() {
     }
 }
 
+
+
 void initializeMap(GameState *game) {
     for (int y = 0; y < MAP_HEIGHT; y++) {
         for (int x = 0; x < MAP_WIDTH; x++) {
@@ -314,201 +305,166 @@ void initializeMap(GameState *game) {
     }
 }
 
-bool isOverlapping(Room *a, Room *b) {
-    return !(a->x + a->width < b->x || b->x + b->width < a->x || a->y + a->height < b->y || b->y + b->height < a->y);
+int itoverlaps(GameState *game, int y, int x, int height, int width) {
+    if (y + height >= MAP_HEIGHT - 1 || x + width >= MAP_WIDTH - 1) return 1;
+    for (int i = y - 2; i <= height + y + 2; i++) {
+        for (int j = x - 2; j <= width + x + 2; j++) {
+            if (i < 0 || i >= MAP_HEIGHT || j < 0 || j >= MAP_WIDTH) continue; // Bounds check
+            if (game->tiles[i][j] != ' ') return 1;
+        }
+    }
+    return 0;
 }
 
-void generateRooms(GameState *game) {
-    game->roomCount = 0;
-    while (game->roomCount < MAX_ROOMS) {
-        int width = rand() % (ROOM_MAX_SIZE - ROOM_MIN_SIZE + 1) + ROOM_MIN_SIZE;
-        int height = rand() % (ROOM_MAX_SIZE - ROOM_MIN_SIZE + 1) + ROOM_MIN_SIZE;
-        int x = rand() % (MAP_WIDTH - width - 1) + 1;
-        int y = rand() % (MAP_HEIGHT - height - 1) + 1;
+void generateRoom(GameState *game, int y, int x, int height, int width) {
+    for (int i = y + 1; i < height + y; i++) {
+        for (int j = x + 1; j < width + x; j++) {
+            game->tiles[i][j] = '.';
+        }
+    }
+    for (int i = y + 1; i <= height + y; i++) {
+        game->tiles[i][x] = '|';
+        game->tiles[i][x + width] = '|';
+    }
+    for (int j = x + 1; j < width + x; j++) {
+        game->tiles[y][j] = '_';
+        game->tiles[y + height][j] = '_';
+    }
+}
 
-        Room newRoom = {x, y, width, height, {0}, {0}, 0};
-        bool overlaps = false;
 
-        for (int i = 0; i < game->roomCount; i++) {
-            if (isOverlapping(&newRoom, &game->rooms[i])) {
-                overlaps = true;
+
+void addDoors(GameState *game, int y, int x, int height, int width) {
+    int doors_placed = 0;
+    int max_retries = (rand() % 3) + 1;
+    int door_wall[4] = {0, 0, 0, 0};  // Tracks if a door has been placed on each wall
+
+    while (max_retries > 0) {
+        int wall = rand() % 4;
+        if (door_wall[wall] == 1) {
+            continue;  // Skip if there's already a door on this wall
+        }
+
+        int door_row, door_col;
+        switch (wall) {
+            case 0:
+                door_row = y;
+                door_col = x + rand() % (width);
                 break;
-            }
+            case 1:
+                door_row = y + height;
+                door_col = x + rand() % (width);
+                break;
+            case 2:
+                door_row = y + rand() % (height);
+                door_col = x;
+                break;
+            case 3:
+                door_row = y + rand() % (height);
+                door_col = x + width;
+                break;
+            default:
+                continue;
         }
-        if (!overlaps) {
-            game->rooms[game->roomCount++] = newRoom;
-            for (int j = y; j < y + height; j++) {
-                for (int k = x; k < x + width; k++) {
-                    if (j == y || j == y + height - 1) {
-                        game->tiles[j][k] = '-';
-                    } else if (k == x || k == x + width - 1) {
-                        game->tiles[j][k] = '|';
-                    } else {
-                        game->tiles[j][k] = '.';
-                    }
-                }
-            }
-        }
-    }
-    // Debug: Print room details
-    for (int i = 0; i < game->roomCount; i++) {
-        Room *room = &game->rooms[i];
-        printf("Room %d: (%d, %d), Size: %d x %d\n", i + 1, room->x, room->y, room->width, room->height);
-    }
-}
 
-void addDoors(GameState *game) {
-    for (int i = 0; i < game->roomCount; i++) {
-        Room *room = &game->rooms[i];
-        int numDoors = rand() % 3 + 1;
-
-        for (int j = 0; j < numDoors; j++) {
-            int wall = rand() % 4;
-            int doorX = 0, doorY = 0;
-            bool validDoor = false;
-
-            while (!validDoor) {
-                if (wall == 0 && room->y > 1) {
-                    doorX = rand() % (room->width - 2) + room->x + 1;
-                    doorY = room->y;
-                    validDoor = true;
-                } else if (wall == 1 && room->y + room->height < MAP_HEIGHT - 1) {
-                    doorX = rand() % (room->width - 2) + room->x + 1;
-                    doorY = room->y + room->height - 1;
-                    validDoor = true;
-                } else if (wall == 2 && room->x > 1) {
-                    doorX = room->x;
-                    doorY = rand() % (room->height - 2) + room->y + 1;
-                    validDoor = true;
-                } else if (wall == 3 && room->x + room->width < MAP_WIDTH - 1) {
-                    doorX = room->x + room->width - 1;
-                    doorY = rand() % (room->height - 2) + room->y + 1;
-                    validDoor = true;
-                } else {
-                    wall = rand() % 4;
-                }
-            }
+        if ((game->tiles[door_row][door_col] == '_' || game->tiles[door_row][door_col] == '|') &&
+            door_row != 0 && door_row != MAP_HEIGHT && door_col != 0 && door_col != MAP_WIDTH &&
+            game->tiles[door_row][door_col - 1] != '|' && game->tiles[door_row][door_col + 1] != '|' &&
+            game->tiles[door_row - 1][door_col] != '_' && game->tiles[door_row + 1][door_col] != '_') {
             
-            room->doorsX[room->doorCount] = doorX;
-            room->doorsY[room->doorCount] = doorY;
-            room->doorCount++;
-            game->tiles[doorY][doorX] = '+';
+            game->tiles[door_row][door_col] = '+';
+            doors_placed = 1;
+            door_wall[wall] = 1;  // Mark this wall as having a door
         }
+        max_retries--;
     }
 
-    // Debug: Print door details
+    if (doors_placed == 0) addDoors(game, y, x, height, width);
+}
+
+
+
+void generateCorridors(GameState *game, Room *rooms) {
+    for (int i = 0; i < game->roomCount - 1; i++) {
+        int x1_pos = rooms[i].x;
+        int y1_pos = rooms[i].y;
+        int x2_pos = rooms[i + 1].x;
+        int y2_pos = rooms[i + 1].y;
+        
+        // Ensure doors are placed properly
+        if (game->tiles[y1_pos][x1_pos] == '_' || game->tiles[y1_pos][x1_pos] == '|') {
+            game->tiles[y1_pos][x1_pos] = '+';
+        }
+        if (game->tiles[y2_pos][x2_pos] == '_' || game->tiles[y2_pos][x2_pos] == '|') {
+            game->tiles[y2_pos][x2_pos] = '+';
+        }
+
+        int currentx = x1_pos;
+        int currenty = y1_pos;
+        while (currentx != x2_pos) {
+            currentx += (currentx < x2_pos) ? 1 : -1;
+            if (game->tiles[currenty][currentx] == ' ') {
+                game->tiles[currenty][currentx] = '#';
+            } else if (game->tiles[currenty][currentx] != '+' &&(game->tiles[currenty][currentx] == '_' || game->tiles[currenty][currentx] == '|')) {
+                game->tiles[currenty][currentx] = '+';
+            }
+        }
+        while (currenty != y2_pos) {
+            currenty += (currenty < y2_pos) ? 1 : -1;
+            if (game->tiles[currenty][currentx] == ' ') {
+                game->tiles[currenty][currentx] = '#';
+            } else if (game->tiles[currenty][currentx] != '+' && (game->tiles[currenty][currentx] == '_' || game->tiles[currenty][currentx] == '|')) {
+                game->tiles[currenty][currentx] = '+';
+            }
+        }
+    }
+}
+
+
+
+void generate_random_map(GameState *game) {
+    //srand(time(NULL));
+    initializeMap(game);
+    game->roomCount = rand() % (MAX_ROOMS - MIN_ROOMS + 1) + MIN_ROOMS;
+    int room_index = 0;
+
     for (int i = 0; i < game->roomCount; i++) {
-        Room *room = &game->rooms[i];
-        for (int j = 0; j < room->doorCount; j++) {
-            printf("Room %d Door %d: (%d, %d)\n", i + 1, j + 1, room->doorsX[j], room->doorsY[j]);
+        int start_row = rand() % (MAP_HEIGHT - 9);
+        int start_col = rand() % (MAP_WIDTH - 9);
+        int rowscount = rand() % 5 + 5;
+        int colscount = rand() % 5 + 5;
+        if (!itoverlaps(game, start_row, start_col, rowscount, colscount)) {
+            generateRoom(game, start_row, start_col, rowscount, colscount);
+            addDoors(game, start_row, start_col, rowscount, colscount);
+            game->rooms[room_index].x = start_col + colscount / 2;
+            game->rooms[room_index].y = start_row + rowscount / 2;
+            game->rooms[room_index].width = colscount;
+            game->rooms[room_index].height = rowscount;
+            room_index++;
+        } else {
+            i--;
         }
+        if (room_index >= MAX_ROOMS) break;
     }
+    generateCorridors(game, game->rooms);
 }
 
-void generateCorridors(GameState *game) {
-    for (int i = 1; i < game->roomCount; i++) {
-        Room *currentRoom = &game->rooms[i - 1];
-        Room *nextRoom = &game->rooms[i];
+void removeUnconnectedDoors(GameState *game) {
+    for (int i = 0; i < MAP_HEIGHT; i++) {
+        for (int j = 0; j < MAP_WIDTH; j++) {
+            if (game->tiles[i][j] == '+') {
+                int connected = 0;
+                if (i > 0 && game->tiles[i - 1][j] == '#') connected = 1; // Up
+                if (i < MAP_HEIGHT - 1 && game->tiles[i + 1][j] == '#') connected = 1; // Down
+                if (j > 0 && game->tiles[i][j - 1] == '#') connected = 1; // Left
+                if (j < MAP_WIDTH - 1 && game->tiles[i][j + 1] == '#') connected = 1; // Right
 
-        int currentDoorIndex = rand() % currentRoom->doorCount;
-        int currentDoorX = currentRoom->doorsX[currentDoorIndex];
-        int currentDoorY = currentRoom->doorsY[currentDoorIndex];
-
-        int nextDoorIndex = rand() % nextRoom->doorCount;
-        int nextDoorX = nextRoom->doorsX[nextDoorIndex];
-        int nextDoorY = nextRoom->doorsY[nextDoorIndex];
-
-        int cx = currentDoorX, cy = currentDoorY;
-
-        // Debug: Print corridor generation details
-        printf("Generating corridor from (%d, %d) to (%d, %d)\n", currentDoorX, currentDoorY, nextDoorX, nextDoorY);
-
-        // Generate a horizontal corridor
-        while (cx != nextDoorX) {
-            if (cx < nextDoorX) {
-                cx++;
-            } else {
-                cx--;
-            }
-            if (game->tiles[cy][cx] == ' ') {
-                game->tiles[cy][cx] = '#';
-            }
-        }
-
-        // Generate a vertical corridor
-        while (cy != nextDoorY) {
-            if (cy < nextDoorY) {
-                cy++;
-            } else {
-                cy--;
-            }
-            if (game->tiles[cy][cx] == ' ') {
-                game->tiles[cy][cx] = '#';
-            }
-        }
-
-        // Ensure doors are properly marked
-        game->tiles[currentDoorY][currentDoorX] = '+';
-        game->tiles[nextDoorY][nextDoorX] = '+';
-    }
-}
-
-void checkMap(GameState *game) {
-    clear();
-    for (int y = 0; y < MAP_HEIGHT; y++) {
-        for (int x = 0; x < MAP_WIDTH; x++) {
-            mvaddch(y, x, game->tiles[y][x]);
-        }
-    }
-    mvprintw(MAP_HEIGHT + 1, 0, "Total Rooms: %d", game->roomCount);
-    for (int i = 0; i < game->roomCount; i++) {
-        Room *room = &game->rooms[i];
-        mvprintw(MAP_HEIGHT + 2 + i, 0, "Room %d: (%d, %d), Size: %d x %d", i + 1, room->x, room->y, room->width, room->height);
-    }
-    refresh();
-    getch();
-}
-
-/*void initializeMap(GameState *game) {
-    for (int y = 0; y < MAP_HEIGHT; y++) {
-        for (int x = 0; x < MAP_WIDTH; x++) {
-            game->tiles[y][x] = ' ';
-            game->visited[y][x] = false;
-        }
-    }
-}
-
-bool isOverlapping(Room *a, Room *b) {
-    return !(a->x + a->width < b->x || b->x + b->width < a->x || a->y + a->height < b->y || b->y + b->height < a->y);
-}
-
-void generateRooms(GameState *game) {
-    game->roomCount = 0;
-    while (game->roomCount < MAX_ROOMS) {
-        int width = rand() % (ROOM_MAX_SIZE - ROOM_MIN_SIZE + 1) + ROOM_MIN_SIZE;
-        int height = rand() % (ROOM_MAX_SIZE - ROOM_MIN_SIZE + 1) + ROOM_MIN_SIZE;
-        int x = rand() % (MAP_WIDTH - width - 1) + 1;
-        int y = rand() % (MAP_HEIGHT - height - 1) + 1;
-
-        Room newRoom = {x, y, width, height, {0}, {0}, 0};
-        bool overlaps = false;
-
-        for (int i = 0; i < game->roomCount; i++) {
-            if (isOverlapping(&newRoom, &game->rooms[i])) {
-                overlaps = true;
-                break;
-            }
-        }
-        if (!overlaps) {
-            game->rooms[game->roomCount++] = newRoom;
-            for (int j = y; j < y + height; j++) {
-                for (int k = x; k < x + width; k++) {
-                    if (j == y || j == y + height - 1) {
-                        game->tiles[j][k] = '-';
-                    } else if (k == x || k == x + width - 1) {
-                        game->tiles[j][k] = '|';
-                    } else {
-                        game->tiles[j][k] = '.';
+                if (!connected) {
+                    // Check neighboring tiles to determine if it's a vertical or horizontal wall
+                    if ((i > 0 && game->tiles[i - 1][j] == '|') || (i < MAP_HEIGHT - 1 && game->tiles[i + 1][j] == '|')) {
+                        game->tiles[i][j] = '|'; // Replace with vertical wall
+                    } else if ((j > 0 && game->tiles[i][j - 1] == '_') || (j < MAP_WIDTH - 1 && game->tiles[i][j + 1] == '_')) {
+                        game->tiles[i][j] = '_'; // Replace with horizontal wall
                     }
                 }
             }
@@ -516,100 +472,342 @@ void generateRooms(GameState *game) {
     }
 }
 
-void addDoors(GameState *game) {
+void resetGameState(GameState *game) {
+    initializeMap(game);
+    game->roomCount = 0;
+    // Add any other necessary reset logic here
+}
+
+void addColumnsToRooms(GameState *game) {
     for (int i = 0; i < game->roomCount; i++) {
         Room *room = &game->rooms[i];
-        int numDoors = rand() % 3 + 1;
+        int columnCount = rand() % 2;
+        for (int j = 0; j < columnCount; j++) {
+            int column_x, column_y;
+            bool validPosition = false;
+            int retries = 10; // Maximum number of retries
 
-        for (int j = 0; j < numDoors; j++) {
-            int wall = rand() % 4;
-            int doorX = 0, doorY = 0;
-            bool validDoor = false;
+            while (retries-- > 0) {
+                column_x = room->x + 1 + rand() % (room->width - 2);
+                column_y = room->y + 1 + rand() % (room->height - 2);
 
-            while (!validDoor) {
-                if (wall == 0 && room->y > 1) {
-                    doorX = rand() % (room->width - 2) + room->x + 1;
-                    doorY = room->y;
-                    validDoor = true;
-                } else if (wall == 1 && room->y + room->height < MAP_HEIGHT - 1) {
-                    doorX = rand() % (room->width - 2) + room->x + 1;
-                    doorY = room->y + room->height - 1;
-                    validDoor = true;
-                } else if (wall == 2 && room->x > 1) {
-                    doorX = room->x;
-                    doorY = rand() % (room->height - 2) + room->y + 1;
-                    validDoor = true;
-                } else if (wall == 3 && room->x + room->width < MAP_WIDTH - 1) {
-                    doorX = room->x + room->width - 1;
-                    doorY = rand() % (room->height - 2) + room->y + 1;
-                } else {
-                    wall = rand() % 4;
+                bool inDoorline = false;
+                // Check column against all door positions in the room
+                for (int y = room->y; y < room->y + room->height; y++) {
+                    if (game->tiles[y][column_x] == '+') {
+                        inDoorline = true;
+                        break;
+                    }
+                }
+                for (int x = room->x; x < room->x + room->width; x++) {
+                    if (game->tiles[column_y][x] == '+') {
+                        inDoorline = true;
+                        break;
+                    }
+                }
+
+                if (!inDoorline && game->tiles[column_y][column_x] == '.') {
+                    validPosition = true;
+                    game->tiles[column_y][column_x] = 'O';
+                    printf("Placed column at (%d, %d)\n", column_x, column_y);  // Debug print
+                    break;
                 }
             }
-            
-            room->doorsX[room->doorCount] = doorX;
-            room->doorsY[room->doorCount] = doorY;
-            room->doorCount++;
-            game->tiles[doorY][doorX] = '+';
-        }
-    }
-}
 
-void generateCorridors(GameState *game) {
-    for (int i = 1; i < game->roomCount; i++) {
-        Room *currentRoom = &game->rooms[i - 1];
-        Room *nextRoom = &game->rooms[i];
-
-        int currentDoorIndex = rand() % currentRoom->doorCount;
-        int currentDoorX = currentRoom->doorsX[currentDoorIndex];
-        int currentDoorY = currentRoom->doorsY[currentDoorIndex];
-
-        int nextDoorIndex = rand() % nextRoom->doorCount;
-        int nextDoorX = nextRoom->doorsX[nextDoorIndex];
-        int nextDoorY = nextRoom->doorsY[nextDoorIndex];
-
-        int cx = currentDoorX, cy = currentDoorY;
-
-        // Generate a horizontal corridor
-        while (cx != nextDoorX) {
-            if (cx < nextDoorX) {
-                cx++;
-            } else {
-                cx--;
-            }
-            if (game->tiles[cy][cx] == ' ') {
-                game->tiles[cy][cx] = '#';
-            }
-        }
-
-        // Generate a vertical corridor
-        while (cy != nextDoorY) {
-            if (cy < nextDoorY) {
-                cy++;
-            } else {
-                cy--;
-            }
-            if (game->tiles[cy][cx] == ' ') {
-                game->tiles[cy][cx] = '#';
+            if (!validPosition) {
+                printf("Failed to place column in room %d after retries.\n", i);
             }
         }
     }
 }
-
-
 
 void checkMap(GameState *game) {
-    clear();
+    // Clear the map area
     for (int y = 0; y < MAP_HEIGHT; y++) {
         for (int x = 0; x < MAP_WIDTH; x++) {
-            mvaddch(y, x, game->tiles[y][x]);
+            // Display the correct character for each tile type
+            switch (game->tiles[y][x]) {
+                case '_':
+                    mvprintw(y, x, "_");
+                    break;
+                case '.':
+                    mvprintw(y, x, ".");
+                    break;
+                case '+':
+                    mvprintw(y, x, "+");
+                    break;
+                case '#':
+                    mvprintw(y, x, "#");
+                    break;
+                case '|':
+                    mvprintw(y, x, "|");
+                    break;
+                case 'F':
+                    mvprintw(y, x, "F");  // Display food tile
+                    break;
+                case 'P':
+                    mvprintw(y, x, "P");  // Display player tile
+                    break;
+                case 'O':
+                    mvprintw(y, x, "O");  // Display column tile
+                    break;
+                default:
+                    mvprintw(y, x, " ");  // Display empty space
+                    break;
+            }
         }
     }
-    mvprintw(MAP_HEIGHT + 1, 0, "Total Rooms: %d", game->roomCount);
-    for (int i = 0; i < game->roomCount; i++) {
-        Room *room = &game->rooms[i];
-        mvprintw(MAP_HEIGHT + 2 + i, 0, "Room %d: (%d, %d), Size: %d x %d", i + 1, room->x, room->y, room->width, room->height);
+
+    // Display player's health and hunger at the bottom
+    mvprintw(MAP_HEIGHT, 0, "Health: %d | Hunger: %d", game->player.health, game->player.hunger);
+
+    refresh();  // Refresh the screen to update changes
+}
+
+
+void initializePlayer(GameState *game) {
+    game->player.health = 100;
+    game->player.hunger = 0;
+    game->player.inventoryCount = 0;
+
+    for (int roomIndex = 0; roomIndex < game->roomCount; roomIndex++) {
+        Room *room = &game->rooms[roomIndex];
+        
+        for (int y = room->y + 1; y < room->y + room->height - 1; y++) {
+            for (int x = room->x + 1; x < room->x + room->width - 1; x++) {
+                if (game->tiles[y][x] == '.') {
+                    game->player.x = x;
+                    game->player.y = y;
+                    game->tiles[y][x] = 'P';
+                    return;
+                }
+            }
+        }
     }
-    refresh();
-    getch();
-}*/
+}
+
+void movePlayer(GameState *game, char input) {
+    int newX = game->player.x;
+    int newY = game->player.y;
+    static char prevTile = '.';  // Keep track of the previous tile the player was on
+
+    // Handle directional input
+    switch (input) {
+        case '8': case 'j': newY -= 1; break;
+        case '2': case 'k': newY += 1; break;
+        case '4': case 'h': newX -= 1; break;
+        case '6': case 'l': newX += 1; break;
+        case '7': case 'y': newY -= 1; newX -= 1; break;
+        case '9': case 'u': newY -= 1; newX += 1; break;
+        case '1': case 'b': newY += 1; newX -= 1; break;
+        case '3': case 'n': newY += 1; newX += 1; break;
+    }
+
+    // Validate move
+    if (newX >= 0 && newX < MAP_WIDTH && newY >= 0 && newY < MAP_HEIGHT) {
+        char nextTile = game->tiles[newY][newX];
+
+        // Ensure player can't move through walls
+        if (nextTile != '_' && nextTile != '|' && nextTile != ' ') {
+
+            // Check for food pickup
+            if (nextTile == 'F') {
+                if (game->player.inventoryCount < 5) {
+                    game->player.inventory[game->player.inventoryCount++] = 1;  // Add food to inventory
+                    mvprintw(MAP_HEIGHT + 1, 0, "Picked up food. Inventory now has %d items.", game->player.inventoryCount);
+                    nextTile = '.';  // Clear the food tile if picked up
+                } else {
+                    mvprintw(MAP_HEIGHT + 1, 0, "Inventory full! Cannot pick up more food.");
+                }
+            }
+
+            // Restore the previous tile if it was a food tile and the inventory was full
+            if (prevTile == 'F') {
+                game->tiles[game->player.y][game->player.x] = 'F';
+            } else {
+                game->tiles[game->player.y][game->player.x] = prevTile;
+            }
+
+            // Update player position
+            prevTile = nextTile;  // Store the current tile before moving
+            game->player.x = newX;
+            game->player.y = newY;
+            game->tiles[newY][newX] = 'P';  // Place the player on the new tile
+
+            mvprintw(MAP_HEIGHT + 2, 0, "Player moved to (%d, %d)", game->player.x, game->player.y);
+        }
+    }
+
+    refresh();  // Refresh the screen to update changes
+}
+
+
+void addFoodToMap(GameState *game) {
+    for (int i = 1; i < game->roomCount - 1; i++) {  // Start from room 2 to the room before the last
+        Room *room = &game->rooms[i];
+        int foodCount = rand() % 3;  // At most 2 food items per room (0, 1, or 2)
+
+        for (int j = 0; j < foodCount; j++) {
+            int x, y;
+            bool placed = false;
+            int retries = 100;  // Maximum number of retries per food item
+
+            while (retries-- > 0) {
+                x = room->x + 1 + rand() % (room->width - 2);  // Ensure food is placed within room boundaries
+                y = room->y + 1 + rand() % (room->height - 2);
+
+                if (game->tiles[y][x] == '.') {
+                    game->tiles[y][x] = 'F';
+                    placed = true;
+                    break;
+                }
+            }
+
+            if (!placed) {
+                mvprintw(MAP_HEIGHT + 5, 0, "Failed to place food item in room %d after retries.", i);
+            }
+        }
+    }
+}
+
+void displayInventory(GameState *game) {
+    int pos = 0;  // Current position in the inventory
+
+    while (true) {
+        clear();  // Clear the screen to display the inventory
+
+        mvprintw(0, 0, "Player Inventory:");
+        for (int i = 0; i < game->player.inventoryCount; i++) {
+            if (i == pos) {
+                mvprintw(i + 1, 0, "> Food Item %d", i + 1);  // Highlight the selected item
+            } else {
+                mvprintw(i + 1, 0, "  Food Item %d", i + 1);
+            }
+        }
+
+        if (game->player.inventoryCount == 0) {
+            mvprintw(1, 0, "Inventory is empty.");
+        }
+
+        mvprintw(game->player.inventoryCount + 2, 0, "Use arrow keys to navigate and Enter to select.");
+        mvprintw(game->player.inventoryCount + 3, 0, "Press any other key to return.");
+        refresh();  // Refresh the screen to show the inventory
+
+        int input = getch();  // Wait for the player to press a key
+
+        if (input == KEY_UP) {  // Handle up arrow key
+            if (pos > 0) {
+                pos--;
+            }
+        } else if (input == KEY_DOWN) {  // Handle down arrow key
+            if (pos < game->player.inventoryCount - 1) {
+                pos++;
+            }
+        } else if (input == '\n') {  // Handle Enter key
+            if (pos < game->player.inventoryCount) {
+                eatFood(game, pos);  // Eat the selected food
+                break;  // Exit the inventory menu after eating
+            }
+        } else {
+            break;  // Exit the inventory menu on any other key
+        }
+    }
+}
+
+void eatFood(GameState *game, int index) {
+    if (index < game->player.inventoryCount) {
+        reduceHunger(game, 20);  // Reduce hunger by 20
+        increaseHealth(game, 10);  // Increase health by 10
+
+        // Remove the eaten food from the inventory
+        for (int i = index; i < game->player.inventoryCount - 1; i++) {
+            game->player.inventory[i] = game->player.inventory[i + 1];
+        }
+        game->player.inventoryCount--;
+
+        refresh();
+    }
+}
+
+void reduceHunger(GameState *game, int amount) {
+    game->player.hunger -= amount;
+    if (game->player.hunger < 0) {
+        game->player.hunger = 0;  // Ensure hunger doesn't go below 0
+    }
+    mvprintw(MAP_HEIGHT, 0, "Health: %d | Hunger: %d", game->player.health, game->player.hunger);
+    refresh();  // Refresh the screen to update changes
+}
+
+void increaseHealth(GameState *game, int amount) {
+    game->player.health += amount;
+    if (game->player.health > 100) {
+        game->player.health = 100;  // Ensure health doesn't go above 100
+    }
+    mvprintw(MAP_HEIGHT, 0, "Health: %d | Hunger: %d", game->player.health, game->player.hunger);
+    refresh();  // Refresh the screen to update changes
+}
+
+void increaseHunger(GameState *game) {
+    game->player.hunger += 10;  // Increment hunger by 10
+    if (game->player.hunger > 100) {
+        game->player.hunger = 100;  // Cap at 100
+    }
+    mvprintw(MAP_HEIGHT, 0, "Health: %d | Hunger: %d", game->player.health, game->player.hunger);
+
+    // If hunger reaches 100, decrease health
+    if (game->player.hunger == 100) {
+        decreasePlayerHealth(game);
+    }
+    refresh();  // Refresh the screen to update changes
+}
+
+void decreasePlayerHealth(GameState *game) {
+    if (game->player.health > 0) {
+        game->player.health -= 10;  // Decrement health by 10
+        if (game->player.health < 0) {
+            game->player.health = 0;  // Ensure health doesn't go below 0
+        }
+        mvprintw(MAP_HEIGHT, 0, "Health: %d | Hunger: %d", game->player.health, game->player.hunger);
+        refresh();  // Refresh the screen to update changes
+    }
+}
+
+void gameloop(GameState *game) {
+    resetGameState(game);
+    generate_random_map(game);
+    removeUnconnectedDoors(game);
+    addColumnsToRooms(game);
+    addFoodToMap(game);  // Ensure food is added to the map
+    initializePlayer(game);
+
+    clear();  // Clear the screen before entering the game loop
+    refresh();  // Refresh to apply changes
+
+    char input;
+    int turnCount = 0;
+
+    while (true) {
+        // Clear and redraw the game map
+        clear();
+        checkMap(game);
+
+        // Increase hunger every 10 moves
+        if (turnCount > 0 && turnCount % 10 == 0) {
+            increaseHunger(game);
+        }
+
+        input = getch();  // Get player input
+
+        if (input == 'x') {
+            clear();  // Clear the screen when exiting the game loop
+            break;  // Exit the game loop on 'x'
+        } else if (input == 'e') {
+            displayInventory(game);  // Display inventory on 'e'
+        } else {
+            movePlayer(game, input);  // Handle player movement
+            turnCount++;  // Increment turn count after a move
+        }
+
+        refresh();  // Refresh the screen to update changes
+    }
+}
