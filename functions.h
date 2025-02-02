@@ -2,13 +2,26 @@
 #define FUNCTIONS_H
 
 #define MAX 100
-#define MAP_WIDTH 50
-#define MAP_HEIGHT 30
-#define ROOM_MIN_SIZE 4
-#define ROOM_MAX_SIZE 8
-#define MIN_ROOMS 6
-#define MAX_ROOMS 8
 
+// Define the dungeon grid size
+#define DUNGEON_WIDTH 120
+#define DUNGEON_HEIGHT 40
+#define FLOORS_NUM 2
+
+#define MAX_ROOMS 10
+
+// Cell types
+#define WALL 1
+#define FLOOR 0
+#define CORRIDOR '#'
+#define DOOR '+'
+#define WALL_H '_'
+#define WALL_V '|'
+#define PLAYER 'P'
+#define DOWN_STAIR '<'
+#define UP_STAIR '>'
+
+// menu and login
 void drawMenu(const char *menuItems[], int menuSize, int highlight);
 int mainMenu();
 bool isValidPassword(const char *password);
@@ -20,53 +33,76 @@ int signUp();
 int login();
 void pregameMenu();
 
-typedef enum {
-    NORMAL_FOOD,
-    HEALING_FOOD,
-    MAGIC_FOOD,
-    POISONOUS_FOOD
-} FoodType;
+// structs
+
+// Structure for a rectangle (sub dungeon)
+typedef struct {
+    int x_min, x_max, y_min, y_max;
+} Rect;
 
 typedef struct {
-    FoodType type;
-    int hungerEffect;
-    int healthEffect;
-    char name[20];
-    int x;
-    int y;
-} Food;
-
-typedef struct {
-    int x;
-    int y;
-    int health;
-    int hunger;
-    int inventoryCount;
-    int inventory[5];
-} Player;
-
-typedef struct {
-    int x, y, height, width;
+    int x_min, x_max, y_min, y_max;
+    int index;
 } Room;
 
+// Union Find structure to manage room connections
 typedef struct {
-    char tiles[MAP_HEIGHT][MAP_WIDTH];
-    bool visited[MAP_HEIGHT][MAP_WIDTH];
-    Room rooms[MAX_ROOMS];
-    int roomCount;
-    Player player;
-} GameState;
+    int *parent;
+    int *rank;
+    int n;
+} UnionFind;
 
-void initializeMap(GameState *game);
-int itoverlaps(GameState *game, int y, int x, int height, int width);
-void generateRoom(GameState *game, int y, int x, int height, int width);
-void addDoors(GameState *game, int y, int x, int height, int width);
-void generateCorridors(GameState *game, Room *rooms);
-void removeUnconnectedDoors(GameState *game);
-void generate_random_map(GameState *game);
-void resetGameState(GameState *game);
-void checkMap(GameState *game);
-void addColumnsToRooms(GameState *game);
+UnionFind* createUnionFind(int n);
+
+typedef struct {
+    int x;
+    int y;
+    // Other player properties like health, name, etc.
+} Player;
+
+//typedef enum {
+//    NORMAL_FOOD,
+//    HEALING_FOOD,
+//    MAGIC_FOOD,
+//    POISONOUS_FOOD
+//} FoodType;
+//
+//typedef struct {
+//    FoodType type;
+//    int hungerEffect;
+//    int healthEffect;
+//    char name[20];
+//    int x;
+//    int y;
+//} Food;
+
+// extern
+extern int dungeon[FLOORS_NUM][DUNGEON_HEIGHT][DUNGEON_WIDTH];
+extern int copyDungeon[FLOORS_NUM][DUNGEON_HEIGHT][DUNGEON_WIDTH];
+extern int currentFloor;
+extern Room rooms[MAX_ROOMS];  // Declare rooms array as extern
+extern int roomCount;
+
+//// map
+void initDungeon();
+void carveRoom(Rect area);
+void splitDungeon(Rect dungeonArea);
+int manhattanDistance(Room r1, Room r2);
+int find(UnionFind *uf, int x);
+void unionSets(UnionFind *uf, int x, int y);
+void carveCorridor(Room r1, Room r2);
+void connectRooms(Room rooms[], int roomCount);
+void displayDungeon();
+int allRoomsConnected(UnionFind* uf, int roomCount);
+void resetDungeon();
+void copyDung();
+void movePlayer(Player *player, int newX, int newY);
+void handleInput(Player *player, int *running);
+
+// player
+void placePlayerInFirstRoom(Player *player);
+
+/* void addColumnsToRooms(GameState *game);
 void initializePlayer(GameState *game);
 void movePlayer(GameState *game, char input);
 void addFoodToMap(GameState *game);
@@ -75,7 +111,7 @@ void eatFood(GameState *game, int index);
 void reduceHunger(GameState *game, int amount);
 void increaseHealth(GameState *game, int amount);
 void increaseHunger(GameState *game);
-void decreasePlayerHealth(GameState *game);
-void gameloop(GameState *game);
+void decreasePlayerHealth(GameState *game); */
+
 
 #endif
