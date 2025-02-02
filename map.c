@@ -3,48 +3,51 @@
 #include <time.h>
 #include <ncurses.h>
 #include <math.h>
+#include "functions.h"
 
-// Define the dungeon grid size
-#define DUNGEON_WIDTH 120
-#define DUNGEON_HEIGHT 40
-
-// Cell types
-#define WALL 1
-#define FLOOR 0
-#define CORRIDOR '#'
-#define DOOR '+'
-#define WALL_H '_'
-#define WALL_V '|'
-#define PLAYER 'P'
+//// Define the dungeon grid size
+//#define DUNGEON_WIDTH 120
+//#define DUNGEON_HEIGHT 40
+//
+//// Cell types
+//#define WALL 1
+//#define FLOOR 0
+//#define CORRIDOR '#'
+//#define DOOR '+'
+//#define WALL_H '_'
+//#define WALL_V '|'
+//#define PLAYER 'P'
 
 // Dungeon grid
-int dungeon[DUNGEON_HEIGHT][DUNGEON_WIDTH];
+int dungeon[FLOORS_NUM][DUNGEON_HEIGHT][DUNGEON_WIDTH];
+int copyDungeon[FLOORS_NUM][DUNGEON_HEIGHT][DUNGEON_WIDTH];
 
-// Structure for a rectangle (sub-dungeon)
-typedef struct {
-    int x_min, x_max, y_min, y_max;
-} Rect;
-
-typedef struct {
-    int x_min, x_max, y_min, y_max;
-    int index;
-} Room;
-
-typedef struct {
-    int x;
-    int y;
-    // Other player properties like health, name, etc.
-} Player;
+//// Structure for a rectangle (sub-dungeon)
+//typedef struct {
+//    int x_min, x_max, y_min, y_max;
+//} Rect;
+//
+//typedef struct {
+//    int x_min, x_max, y_min, y_max;
+//    int index;
+//} Room;
+//
+//typedef struct {
+//    int x;
+//    int y;
+//    // Other player properties like health, name, etc.
+//} Player;
 
 // List of rooms
-Room rooms[10];  //the size as needed
-int roomCount = 0;  // Counter to track the number of rooms
+Room rooms[MAX_ROOMS];
+int roomCount = 0;
+int currentFloor = 0;
 
 // Function to initialize the dungeon with walls
 void initDungeon() {
     for (int y = 0; y < DUNGEON_HEIGHT; y++) {
         for (int x = 0; x < DUNGEON_WIDTH; x++) {
-            dungeon[y][x] = WALL;  // Start with all walls
+            dungeon[currentFloor][y][x] = WALL;  // Start with all walls
         }
     }
 }
@@ -56,7 +59,7 @@ void carveRoom(Rect area) {
     int room_height = area.y_max - area.y_min;
 
     if (room_width < 5 || room_height < 5) {
-        mvprintw(0, 0, "Area too small for a room: %dx%d", room_width, room_height);
+        //mvprintw(0, 0, "Area too small for a room: %dx%d", room_width, room_height);
         refresh();  // Refresh to display the message
         return;  // Skip if the area is too small for a 5x5 room
     }
@@ -73,7 +76,7 @@ void carveRoom(Rect area) {
 
     // Ensure the room is within the dungeon bounds
     if (room_x_min < 0 || room_x_max >= DUNGEON_WIDTH || room_y_min < 0 || room_y_max >= DUNGEON_HEIGHT) {
-        mvprintw(1, 0, "Room out of bounds: (%d,%d) to (%d,%d)", room_x_min, room_y_min, room_x_max, room_y_max);
+        //mvprintw(1, 0, "Room out of bounds: (%d,%d) to (%d,%d)", room_x_min, room_y_min, room_x_max, room_y_max);
         refresh();  // Refresh to display the message
         return;  // Skip if the room is out of bounds
     }
@@ -81,30 +84,29 @@ void carveRoom(Rect area) {
     // Carve out the floor: set all tiles inside the room to FLOOR (.)
     for (int y = room_y_min + 1; y < room_y_max - 1; y++) {  // Exclude the room boundaries
         for (int x = room_x_min + 1; x < room_x_max - 1; x++) {
-            dungeon[y][x] = FLOOR;  // Set the floor inside the room
+            dungeon[currentFloor][y][x] = FLOOR;  // Set the floor inside the room
         }
     }
 
     // Place vertical walls (|) on the left and right boundaries of the room
     for (int y = room_y_min; y < room_y_max; y++) {
         if (room_x_min >= 0 && room_x_min < DUNGEON_WIDTH) {
-            dungeon[y][room_x_min] = WALL_V;  // Left wall
+            dungeon[currentFloor][y][room_x_min] = WALL_V;  // Left wall
         }
         if (room_x_max - 1 >= 0 && room_x_max - 1 < DUNGEON_WIDTH) {
-            dungeon[y][room_x_max - 1] = WALL_V;  // Right wall
+            dungeon[currentFloor][y][room_x_max - 1] = WALL_V;  // Right wall
         }
     }
 
     // Place horizontal walls (_) on the top and bottom boundaries of the room
     for (int x = room_x_min; x < room_x_max; x++) {
         if (room_y_min >= 0 && room_y_min < DUNGEON_HEIGHT) {
-            dungeon[room_y_min][x] = WALL_H;  // Top wall
+            dungeon[currentFloor][room_y_min][x] = WALL_H;  // Top wall
         }
         if (room_y_max - 1 >= 0 && room_y_max - 1 < DUNGEON_HEIGHT) {
-            dungeon[room_y_max - 1][x] = WALL_H;  // Bottom wall
+            dungeon[currentFloor][room_y_max - 1][x] = WALL_H;  // Bottom wall
         }
     }
-
     // Save the room in the rooms list
     rooms[roomCount].x_min = room_x_min;
     rooms[roomCount].x_max = room_x_max;
@@ -112,8 +114,7 @@ void carveRoom(Rect area) {
     rooms[roomCount].y_max = room_y_max;
     rooms[roomCount].index = roomCount;  // Assign a unique index
     roomCount++;
-
-    mvprintw(2, 0, "Carved room: (%d,%d) to (%d,%d)", room_x_min, room_y_min, room_x_max, room_y_max);
+    //mvprintw(2, 0, "Carved room: (%d,%d) to (%d,%d)", room_x_min, room_y_min, room_x_max, room_y_max);
     refresh();  // Refresh to display the message
 }
 
@@ -181,12 +182,12 @@ int manhattanDistance(Room r1, Room r2) {
     return abs(center_x2 - center_x1) + abs(center_y2 - center_y1);
 }
 
-// Union-Find structure to manage room connections
-typedef struct {
-    int *parent;
-    int *rank;
-    int n;
-} UnionFind;
+//// Union-Find structure to manage room connections
+//typedef struct {
+//    int *parent;
+//    int *rank;
+//    int n;
+//} UnionFind;
 
 // Initialize Union-Find data structure
 UnionFind* createUnionFind(int n) {
@@ -242,35 +243,35 @@ void carveCorridor(Room r1, Room r2) {
         if (x1 > x2) {  // If room 1 is to the right of room 2
             for (int x = x1; x >= x2; x--) {
                 // Only replace wall with corridor once
-                if (dungeon[ys][x] == WALL_V) {
-                    dungeon[ys][x] = DOOR;  // Replace wall with corridor
-                }else if (dungeon[ys][x] == WALL_H && ys > y2) {
+                if (dungeon[currentFloor][ys][x] == WALL_V) {
+                    dungeon[currentFloor][ys][x] = DOOR;  // Replace wall with corridor
+                }else if (dungeon[currentFloor][ys][x] == WALL_H && ys > y2) {
                     ys=ys-1;
                     x=x+1;
-                    dungeon[ys][x] = CORRIDOR;  // Carve the corridor
-                }else if (dungeon[ys][x] == WALL_H && ys < y2) {
+                    dungeon[currentFloor][ys][x] = CORRIDOR;  // Carve the corridor
+                }else if (dungeon[currentFloor][ys][x] == WALL_H && ys < y2) {
                     ys=ys+1;
                     x=x+1;
-                    dungeon[ys][x] = CORRIDOR;  // Carve the corridor
-                }else if (dungeon[ys][x] != DOOR && dungeon[ys][x] != CORRIDOR && dungeon[ys][x] != FLOOR) {
-                    dungeon[ys][x] = CORRIDOR;  // Carve the corridor
+                    dungeon[currentFloor][ys][x] = CORRIDOR;  // Carve the corridor
+                }else if (dungeon[currentFloor][ys][x] != DOOR && dungeon[currentFloor][ys][x] != CORRIDOR && dungeon[currentFloor][ys][x] != FLOOR) {
+                    dungeon[currentFloor][ys][x] = CORRIDOR;  // Carve the corridor
                 }
             }
         } else {  // If room 1 is to the left of room 2
             for (int x = x1; x <= x2; x++) {
                 // Only replace wall with corridor once
-                if (dungeon[ys][x] == WALL_V) {
-                    dungeon[ys][x] = DOOR;  // Replace wall with corridor
-                } else if (dungeon[ys][x] == WALL_H && ys > y2) {
+                if (dungeon[currentFloor][ys][x] == WALL_V) {
+                    dungeon[currentFloor][ys][x] = DOOR;  // Replace wall with corridor
+                } else if (dungeon[currentFloor][ys][x] == WALL_H && ys > y2) {
                     ys=ys-1;
                     x=x-1;
-                    dungeon[ys][x] = CORRIDOR;  // Carve the corridor
-                }else if (dungeon[ys][x] == WALL_H && ys < y2) {
+                    dungeon[currentFloor][ys][x] = CORRIDOR;  // Carve the corridor
+                }else if (dungeon[currentFloor][ys][x] == WALL_H && ys < y2) {
                     ys=ys+1;
                     x=x-1;
-                    dungeon[ys][x] = CORRIDOR;  // Carve the corridor
-                } else if (dungeon[ys][x] != DOOR && dungeon[ys][x] != CORRIDOR && dungeon[ys][x] != FLOOR) {
-                    dungeon[ys][x] = CORRIDOR;  // Carve the corridor
+                    dungeon[currentFloor][ys][x] = CORRIDOR;  // Carve the corridor
+                } else if (dungeon[currentFloor][ys][x] != DOOR && dungeon[currentFloor][ys][x] != CORRIDOR && dungeon[currentFloor][ys][x] != FLOOR) {
+                    dungeon[currentFloor][ys][x] = CORRIDOR;  // Carve the corridor
                 }
             }
         }
@@ -280,38 +281,38 @@ void carveCorridor(Room r1, Room r2) {
     if (y1 != y2) {
         if (y1 > y2) {  // If room 1 is below room 2
             for (int y = ys; y >= y2; y--) {
-                if ((dungeon[y][x2] == WALL_V || dungeon[y][x2] == DOOR) && dungeon[y][x2 + 1] == WALL) {
-                    dungeon[y][x2 + 1] = CORRIDOR;
-                } else if ((dungeon[y][x2] == WALL_V || dungeon[y][x2] == DOOR) && dungeon[y][x2 - 1] == WALL) {
-                    dungeon[y][x2 - 1] = CORRIDOR;
-                }else if (dungeon[y][x2] == WALL_H && dungeon[y][x2 + 1] == WALL) {
-                    dungeon[y][x2 + 1] = CORRIDOR;
-                    dungeon[y - 1][x2 + 1] = CORRIDOR;
-                } else if (dungeon[y][x2] == WALL_H && dungeon[y][x2 - 1] == WALL) {
-                    dungeon[y][x2 - 1] = CORRIDOR;
-                    dungeon[y - 1][x2 - 1] = CORRIDOR;
-                } else if (dungeon[y][x2] != DOOR && dungeon[y][x2] != CORRIDOR && dungeon[y][x2] != WALL_V && dungeon[y][x2] != WALL_H && dungeon[y][x2] != FLOOR) {
-                    dungeon[y][x2] = CORRIDOR;  // Carve the corridor
-                } else if (dungeon[y][x2] == WALL_H) {
-                    dungeon[y][x2] = DOOR;
+                if ((dungeon[currentFloor][y][x2] == WALL_V || dungeon[currentFloor][y][x2] == DOOR) && dungeon[currentFloor][y][x2 + 1] == WALL) {
+                    dungeon[currentFloor][y][x2 + 1] = CORRIDOR;
+                } else if ((dungeon[currentFloor][y][x2] == WALL_V || dungeon[currentFloor][y][x2] == DOOR) && dungeon[currentFloor][y][x2 - 1] == WALL) {
+                    dungeon[currentFloor][y][x2 - 1] = CORRIDOR;
+                }else if (dungeon[currentFloor][y][x2] == WALL_H && dungeon[currentFloor][y][x2 + 1] == WALL) {
+                    dungeon[currentFloor][y][x2 + 1] = CORRIDOR;
+                    dungeon[currentFloor][y - 1][x2 + 1] = CORRIDOR;
+                } else if (dungeon[currentFloor][y][x2] == WALL_H && dungeon[currentFloor][y][x2 - 1] == WALL) {
+                    dungeon[currentFloor][y][x2 - 1] = CORRIDOR;
+                    dungeon[currentFloor][y - 1][x2 - 1] = CORRIDOR;
+                } else if (dungeon[currentFloor][y][x2] != DOOR && dungeon[currentFloor][y][x2] != CORRIDOR && dungeon[currentFloor][y][x2] != WALL_V && dungeon[currentFloor][y][x2] != WALL_H && dungeon[currentFloor][y][x2] != FLOOR) {
+                    dungeon[currentFloor][y][x2] = CORRIDOR;  // Carve the corridor
+                } else if (dungeon[currentFloor][y][x2] == WALL_H) {
+                    dungeon[currentFloor][y][x2] = DOOR;
                 }
             }
         } else {  // If room 1 is above room 2
             for (int y = ys; y <= y2; y++) {
-                if ((dungeon[y][x2] == WALL_V || dungeon[y][x2] == DOOR) && dungeon[y][x2 + 1] == WALL) {
-                    dungeon[y][x2 + 1] = CORRIDOR;
-                } else if ((dungeon[y][x2] == WALL_V || dungeon[y][x2] == DOOR) && dungeon[y][x2 - 1] == WALL) {
-                    dungeon[y][x2 - 1] = CORRIDOR;
-                }else if (dungeon[y][x2] == WALL_H && dungeon[y][x2 + 1] == WALL) {
-                    dungeon[y][x2 + 1] = CORRIDOR;
-                    dungeon[y + 1][x2 + 1] = CORRIDOR;
-                } else if (dungeon[y][x2] == WALL_H && dungeon[y][x2 - 1] == WALL) {
-                    dungeon[y][x2 - 1] = CORRIDOR;
-                    dungeon[y + 1][x2 - 1] = CORRIDOR;
-                } else if (dungeon[y][x2] != DOOR && dungeon[y][x2] != CORRIDOR && dungeon[y][x2] != WALL_V && dungeon[y][x2] != WALL_H && dungeon[y][x2] != FLOOR) {
-                    dungeon[y][x2] = CORRIDOR;  // Carve the corridor
-                } else if (dungeon[y][x2] == WALL_H) {
-                    dungeon[y][x2] = DOOR;
+                if ((dungeon[currentFloor][y][x2] == WALL_V || dungeon[currentFloor][y][x2] == DOOR) && dungeon[currentFloor][y][x2 + 1] == WALL) {
+                    dungeon[currentFloor][y][x2 + 1] = CORRIDOR;
+                } else if ((dungeon[currentFloor][y][x2] == WALL_V || dungeon[currentFloor][y][x2] == DOOR) && dungeon[currentFloor][y][x2 - 1] == WALL) {
+                    dungeon[currentFloor][y][x2 - 1] = CORRIDOR;
+                }else if (dungeon[currentFloor][y][x2] == WALL_H && dungeon[currentFloor][y][x2 + 1] == WALL) {
+                    dungeon[currentFloor][y][x2 + 1] = CORRIDOR;
+                    dungeon[currentFloor][y + 1][x2 + 1] = CORRIDOR;
+                } else if (dungeon[currentFloor][y][x2] == WALL_H && dungeon[currentFloor][y][x2 - 1] == WALL) {
+                    dungeon[currentFloor][y][x2 - 1] = CORRIDOR;
+                    dungeon[currentFloor][y + 1][x2 - 1] = CORRIDOR;
+                } else if (dungeon[currentFloor][y][x2] != DOOR && dungeon[currentFloor][y][x2] != CORRIDOR && dungeon[currentFloor][y][x2] != WALL_V && dungeon[currentFloor][y][x2] != WALL_H && dungeon[currentFloor][y][x2] != FLOOR) {
+                    dungeon[currentFloor][y][x2] = CORRIDOR;  // Carve the corridor
+                } else if (dungeon[currentFloor][y][x2] == WALL_H) {
+                    dungeon[currentFloor][y][x2] = DOOR;
                 }
             }
         }
@@ -366,10 +367,8 @@ void connectRooms(Room rooms[], int roomCount) {
 
     // Check if all rooms are connected
     if (!allRoomsConnected(uf, roomCount)) {
-        printf("Warning: Not all rooms are connected after the initial connection pass.\n");
-
-        // You can apply a fallback strategy to connect any remaining disconnected rooms
-        // Here you can try to connect the remaining unconnected rooms
+        //printf("Warning: Not all rooms are connected.\n");
+        // Here we can try to connect the remaining unconnected rooms
         for (int i = 0; i < roomCount; i++) {
             for (int j = i + 1; j < roomCount; j++) {
                 if (find(uf, i) != find(uf, j)) {
@@ -391,25 +390,30 @@ void displayDungeon() {
     // Render the dungeon using ncurses
     for (int y = 0; y < DUNGEON_HEIGHT; y++) {
         for (int x = 0; x < DUNGEON_WIDTH; x++) {
-            if (dungeon[y][x] == WALL) {
-                mvaddch(y, x, ' ');  // Display walls as '#'
-            } else if (dungeon[y][x] == FLOOR) {
+            if (dungeon[currentFloor][y][x] == WALL) {
+                mvaddch(y, x, ' ');  // Display walls as ' '
+            } else if (dungeon[currentFloor][y][x] == FLOOR) {
                 mvaddch(y, x, '.');  // Display empty space as '.'
-            } else if (dungeon[y][x] == CORRIDOR) {
+            } else if (dungeon[currentFloor][y][x] == CORRIDOR) {
                 mvaddch(y, x, '#');  // Display corridors as '#'
-            } else if (dungeon[y][x] == DOOR) {
+            } else if (dungeon[currentFloor][y][x] == DOOR) {
                 mvaddch(y, x, '+'); // Display doors as '+'
-            } else if (dungeon[y][x] == WALL_V) {
+            } else if (dungeon[currentFloor][y][x] == WALL_V) {
                 mvaddch(y, x, '|'); // Display wall v as '|'
-            } else if (dungeon[y][x] == WALL_H) {
+            } else if (dungeon[currentFloor][y][x] == WALL_H) {
                 mvaddch(y, x, '_'); // Display wall h as '_'
-            } else if (dungeon[y][x] == PLAYER) {
+            } else if (dungeon[currentFloor][y][x] == PLAYER) {
                 mvaddch(y, x, 'P'); // Display player h as 'P'
+            } else if (dungeon[currentFloor][y][x] == DOWN_STAIR) {
+                mvaddch(y, x, '<'); // Display down stair h as '<'
+            } else if (dungeon[currentFloor][y][x] == UP_STAIR) {
+                mvaddch(y, x, '>'); // Display up stair h as '>'
             }
         }
     }
     refresh();  // Refresh the screen to show the dungeon
 }
+
 // Function to check if all rooms are connected in the Union-Find structure
 int allRoomsConnected(UnionFind* uf, int roomCount) {
     int root = find(uf, 0); // Get the root of the first room
@@ -425,11 +429,12 @@ int allRoomsConnected(UnionFind* uf, int roomCount) {
 void placePlayerInFirstRoom(Player *player) {
     if (roomCount > 0) {
         Room firstRoom = rooms[0]; // Get the first room
+        currentFloor = 0;
         int centerX = (firstRoom.x_min + firstRoom.x_max) / 2;
         int centerY = (firstRoom.y_min + firstRoom.y_max) / 2;
 
         // Make sure the center is a valid position (not a wall or out of bounds)
-        while (dungeon[centerY][centerX] == WALL || dungeon[centerY][centerX] == WALL_H || dungeon[centerY][centerX] == WALL_V) {
+        while (dungeon[currentFloor][centerY][centerX] == WALL || dungeon[currentFloor][centerY][centerX] == WALL_H || dungeon[currentFloor][centerY][centerX] == WALL_V) {
             // Move around the center if it's blocked
             centerX++;
             if (centerX > firstRoom.x_max) {
@@ -451,44 +456,54 @@ void placePlayerInFirstRoom(Player *player) {
         player->y = centerY;
 
         // Mark the player's position on the dungeon map
-        dungeon[player->y][player->x] = PLAYER;  // Use 'P' for the player character
+        dungeon[currentFloor][player->y][player->x] = PLAYER;  // Use 'P' for the player character
     }
 }
 
+void copyDung() {
+    for (int y = 0; y < DUNGEON_HEIGHT; y++) {
+        for (int x = 0; x < DUNGEON_WIDTH; x++) {
+            copyDungeon[currentFloor][y][x] = dungeon[currentFloor][y][x];
+        }
+    }
+}
 
+void movePlayer(Player *player, int newX, int newY) {
+    // Check if the new position is within bounds and not a wall
+    if (newX >= 0 && newX < DUNGEON_WIDTH && newY >= 0 && newY < DUNGEON_HEIGHT) {
+        if (dungeon[currentFloor][newY][newX] == FLOOR || dungeon[currentFloor][newY][newX] == CORRIDOR || dungeon[currentFloor][newY][newX] == DOOR) {
+            // Clear the previous position
+            dungeon[currentFloor][player->y][player->x] = copyDungeon[currentFloor][player->y][player->x];
 
-int main() {
-    srand(time(NULL));  // Seed for random number generation
+            // Update player position
+            player->x = newX;
+            player->y = newY;
 
-    // Initialize ncurses
-    initscr();
-    cbreak();
-    noecho();
-    curs_set(0);  // Hide cursor
+            // Mark the new player position
+            dungeon[currentFloor][player->y][player->x] = PLAYER;
+        }
+    }
+}
 
-    // Initialize dungeon with walls
-    initDungeon();
+void handleInput(Player *player, int *running) {
+    int ch = getch();  // Get user input
 
-    // Define the entire dungeon area to split (from (0,0) to (DUNGEON_WIDTH, DUNGEON_HEIGHT))
-    Rect fullDungeon = {0, DUNGEON_WIDTH, 0, DUNGEON_HEIGHT};
+    switch (ch) {
+        case '8': case 'j': movePlayer(player, player->x, player->y - 1); break;
+        case '2': case 'k': movePlayer(player, player->x, player->y + 1); break;
+        case '4': case 'h': movePlayer(player, player->x - 1, player->y); break;
+        case '6': case 'l': movePlayer(player, player->x + 1, player->y); break;
+        case '7': case 'y': movePlayer(player, player->x - 1, player->y - 1); break;
+        case '9': case 'u': movePlayer(player, player->x + 1, player->y - 1); break;
+        case '1': case 'b': movePlayer(player, player->x - 1, player->y + 1); break;
+        case '3': case 'n': movePlayer(player, player->x + 1, player->y + 1); break;
+        case 'q':  // Quit the game if 'q' is pressed
+            *running = 0;  // Set running to 0 to break the loop
+            break;
+        default:
+            break;  // No movement
+    }
 
-    // Split the dungeon recursively
-    splitDungeon(fullDungeon);
-
-    connectRooms(rooms, roomCount);
-
-    Player player;
-
-    placePlayerInFirstRoom(&player);
-
-    // Display the dungeon using ncurses
+    // Display the dungeon after the move
     displayDungeon();
-
-    // Wait for a key press before exiting
-    getch();
-
-    // End ncurses
-    endwin();
-
-    return 0;
 }
