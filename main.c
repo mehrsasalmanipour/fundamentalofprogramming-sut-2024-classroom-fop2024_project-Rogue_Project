@@ -33,7 +33,7 @@ int main() {
             clear();
             playerIsRegistered = login();
         } else if (mainChoice == 2) {
-
+            staircaseCount = 0;
             Player player;
 
             while(currentFloor < FLOORS_NUM) {
@@ -42,6 +42,7 @@ int main() {
                 Rect fullDungeon = {0, DUNGEON_WIDTH, 0, DUNGEON_HEIGHT};
                 splitDungeon(fullDungeon);
                 connectRooms(rooms, roomCount);
+                placeStairs();
                 copyDung();
                 if (currentFloor == 0) {
                     placePlayerInFirstRoom(&player);
