@@ -38,6 +38,10 @@ int copyDungeon[FLOORS_NUM][DUNGEON_HEIGHT][DUNGEON_WIDTH];
 //    // Other player properties like health, name, etc.
 //} Player;
 
+// Stairs
+Staircase staircases[FLOORS_NUM * 2];  // Array to store staircases (2 per floor)
+int staircaseCount = 0;                // Counter for staircases
+
 // List of rooms
 Room rooms[MAX_ROOMS];
 int roomCount = 0;
@@ -411,9 +415,17 @@ void displayDungeon() {
             } else if (dungeon[currentFloor][y][x] == COLUMN) {
                 mvaddch(y, x, 'O'); // Display column as 'O'
             } else if (dungeon[currentFloor][y][x] == GOLD) {
+                attron(COLOR_PAIR(4));
                 mvaddch(y, x, 'G'); // Display gold as 'G'
+                attroff(COLOR_PAIR(4));
             } else if (dungeon[currentFloor][y][x] == BLACK_GOLD) {
+                attron(COLOR_PAIR(5));
                 mvaddch(y, x, 'B'); // Display black gold as 'B'
+                attroff(COLOR_PAIR(5));
+            } else if (dungeon[currentFloor][y][x] == TRAP) {
+                attron((COLOR_PAIR(2)));
+                mvaddch(y, x, 'T'); // Display trap as 'T'
+                attroff(COLOR_PAIR(2));
             }
         }
     }
@@ -477,16 +489,64 @@ void copyDung() {
 void movePlayer(Player *player, int newX, int newY) {
     // Check if the new position is within bounds and not a wall
     if (newX >= 0 && newX < DUNGEON_WIDTH && newY >= 0 && newY < DUNGEON_HEIGHT) {
-        if (dungeon[currentFloor][newY][newX] == FLOOR || dungeon[currentFloor][newY][newX] == CORRIDOR || dungeon[currentFloor][newY][newX] == DOOR) {
-            // Clear the previous position
-            dungeon[currentFloor][player->y][player->x] = copyDungeon[currentFloor][player->y][player->x];
+        if (dungeon[currentFloor][newY][newX] == FLOOR || dungeon[currentFloor][newY][newX] == CORRIDOR || dungeon[currentFloor][newY][newX] == DOOR || dungeon[currentFloor][newY][newX] == UP_STAIR || dungeon[currentFloor][newY][newX] == DOWN_STAIR || dungeon[currentFloor][newY][newX] == GOLD || dungeon[currentFloor][newY][newX] == BLACK_GOLD || dungeon[currentFloor][newY][newX] == TRAP) {
 
-            // Update player position
-            player->x = newX;
-            player->y = newY;
+            if (dungeon[currentFloor][newY][newX] == UP_STAIR) {
+                int j = 0;
+                dungeon[currentFloor][player->y][player->x] = copyDungeon[currentFloor][player->y][player->x];
+                currentFloor += 1;
+                for (int i = 0; i < staircaseCount; i++) {
+                    if (staircases[i].floor == currentFloor && staircases[i].type == DOWN_STAIR) {
+                        j = i;
+                    }
+                }
+                player->x = staircases[j].x;
+                player->y = staircases[j].y;
+                dungeon[currentFloor][player->y][player->x] = PLAYER;
 
-            // Mark the new player position
-            dungeon[currentFloor][player->y][player->x] = PLAYER;
+            } else if (dungeon[currentFloor][newY][newX] == DOWN_STAIR) {
+                int j = 0;
+                dungeon[currentFloor][player->y][player->x] = copyDungeon[currentFloor][player->y][player->x];
+                currentFloor -= 1;
+                for (int i = 0; i < staircaseCount; i++) {
+                    if (staircases[i].floor == currentFloor && staircases[i].type == UP_STAIR) {
+                        j = i;
+                    }
+                }
+                player->x = staircases[j].x;
+                player->y = staircases[j].y;
+                dungeon[currentFloor][player->y][player->x] = PLAYER;
+            } else if (dungeon[currentFloor][newY][newX] == GOLD) {
+                int coins = rand() % 3 + 1;
+                player->gold += coins;
+                dungeon[currentFloor][player->y][player->x] = copyDungeon[currentFloor][player->y][player->x];
+                player->x = newX;
+                player->y = newY;
+                dungeon[currentFloor][player->y][player->x] = PLAYER;
+            } else if (dungeon[currentFloor][newY][newX] == BLACK_GOLD) {
+                int coins = rand() % 3 + 5;
+                player->gold += coins;
+                dungeon[currentFloor][player->y][player->x] = copyDungeon[currentFloor][player->y][player->x];
+                player->x = newX;
+                player->y = newY;
+                dungeon[currentFloor][player->y][player->x] = PLAYER;
+            } else if (dungeon[currentFloor][newY][newX] == TRAP) {
+                player->health -= 5;
+                dungeon[currentFloor][player->y][player->x] = copyDungeon[currentFloor][player->y][player->x];
+                player->x = newX;
+                player->y = newY;
+                dungeon[currentFloor][player->y][player->x] = PLAYER;
+            } else {
+                // Clear the previous position
+                dungeon[currentFloor][player->y][player->x] = copyDungeon[currentFloor][player->y][player->x];
+
+                // Update player position
+                player->x = newX;
+                player->y = newY;
+
+                // Mark the new player position
+                dungeon[currentFloor][player->y][player->x] = PLAYER;
+            }
         }
     }
 }
@@ -512,4 +572,135 @@ void handleInput(Player *player, int *running) {
 
     // Display the dungeon after the move
     displayDungeon();
+}
+
+// Function to initialize stairs in room
+void placeStairs() {
+    if (roomCount > 0) {
+        Room firstRoom = rooms[0];
+        Room lastRoom = rooms[roomCount - 1];
+
+        Staircase newStaircase;
+
+        if (currentFloor == 0) {
+            int x1 = lastRoom.x_min;
+            int x2 = lastRoom.x_max;
+            int y1 = lastRoom.y_min;
+            int y2 = lastRoom.y_max;
+
+            int randX = x1 + 1 + rand() % (x2 - x1 - 2);
+            int randY = y1 + 1 + rand() % (y2 - y1 - 2);
+
+            if (dungeon[currentFloor][randY][randX] == FLOOR) {
+                newStaircase.x = randX;
+                newStaircase.y = randY;
+                newStaircase.type = UP_STAIR;
+                newStaircase.floor = currentFloor;
+
+                staircases[staircaseCount++] = newStaircase;
+
+                dungeon[currentFloor][randY][randX] = UP_STAIR;
+            }
+
+        } else if (currentFloor == 1) {
+            int x1 = firstRoom.x_min;
+            int x2 = firstRoom.x_max;
+            int y1 = firstRoom.y_min;
+            int y2 = firstRoom.y_max;
+
+            int randX = x1 + 1 + rand() % (x2 - x1 - 2);
+            int randY = y1 + 1 + rand() % (y2 - y1 - 2);
+
+            if (dungeon[currentFloor][randY][randX] == FLOOR) {
+                newStaircase.x = randX;
+                newStaircase.y = randY;
+                newStaircase.type = DOWN_STAIR;
+                newStaircase.floor = currentFloor;
+
+                staircases[staircaseCount++] = newStaircase;
+
+                dungeon[currentFloor][randY][randX] = DOWN_STAIR;
+            }
+        }
+    }
+}
+
+// Function to initialize columns in room
+void addColumns() {
+    for (int i = 0; i < roomCount - 1; i++) {
+        int columnCount = rand() % 2;
+
+        Room currentRoom = rooms[i];
+
+        int x1 = currentRoom.x_min;
+        int x2 = currentRoom.x_max;
+        int y1 = currentRoom.y_min;
+        int y2 = currentRoom.y_max;
+
+        for (int j = 0; j < columnCount; j++) {
+            int randX = x1 + 1 + rand() % (x2 - x1 - 2);
+            int randY = y1 + 1 + rand() % (y2 - y1 - 2);
+
+            if (dungeon[currentFloor][randY][randX] == FLOOR) {
+                dungeon[currentFloor][randY][randX] = COLUMN;
+            }
+        }
+    }
+}
+
+// Function to initialize gold in room
+void addGold() {
+    for (int i = 0; i < roomCount - 1; i++) {
+        int goldCount = rand() % 4;
+
+        Room currentRoom = rooms[i];
+
+        int x1 = currentRoom.x_min;
+        int x2 = currentRoom.x_max;
+        int y1 = currentRoom.y_min;
+        int y2 = currentRoom.y_max;
+
+        for (int j = 0; j < goldCount; j++) {
+            int randX = x1 + 1 + rand() % (x2 - x1 - 2);
+            int randY = y1 + 1 + rand() % (y2 - y1 - 2);
+
+            if (dungeon[currentFloor][randY][randX] == FLOOR) {
+                dungeon[currentFloor][randY][randX] = GOLD;
+            }
+        }
+
+        int blackGoldCount = rand() % 2;
+
+        for (int j = 0; j < blackGoldCount; j++) {
+            int randX = x1 + 1 + rand() % (x2 - x1 - 2);
+            int randY = y1 + 1 + rand() % (y2 - y1 - 2);
+
+            if (dungeon[currentFloor][randY][randX] == FLOOR) {
+                dungeon[currentFloor][randY][randX] = BLACK_GOLD;
+            }
+        }
+    }
+}
+
+// Function to initialize gold in room
+void addTraps() {
+    for (int i = 0; i < roomCount - 1; i++) {
+        int trapCount = rand() % 3;
+
+        Room currentRoom = rooms[i];
+
+        int x1 = currentRoom.x_min;
+        int x2 = currentRoom.x_max;
+        int y1 = currentRoom.y_min;
+        int y2 = currentRoom.y_max;
+
+        for (int j = 0; j < trapCount; j++) {
+            int randX = x1 + 1 + rand() % (x2 - x1 - 2);
+            int randY = y1 + 1 + rand() % (y2 - y1 - 2);
+
+            if (dungeon[currentFloor][randY][randX] == FLOOR) {
+                dungeon[currentFloor][randY][randX] = TRAP;
+            }
+        }
+    }
 }
