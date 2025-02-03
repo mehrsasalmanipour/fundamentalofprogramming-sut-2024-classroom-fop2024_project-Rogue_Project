@@ -20,6 +20,9 @@
 #define PLAYER 'P'
 #define DOWN_STAIR '<'
 #define UP_STAIR '>'
+#define COLUMN 'O'
+#define GOLD 'G'
+#define BLACK_GOLD 'B'
 
 // menu and login
 void drawMenu(const char *menuItems[], int menuSize, int highlight);
@@ -57,6 +60,7 @@ UnionFind* createUnionFind(int n);
 typedef struct {
     int x;
     int y;
+    int gold;
     // Other player properties like health, name, etc.
 } Player;
 
@@ -108,6 +112,8 @@ void copyDung();
 void movePlayer(Player *player, int newX, int newY);
 void handleInput(Player *player, int *running);
 void placeStairs();
+void addColumns();
+void addGold();
 
 // player
 void placePlayerInFirstRoom(Player *player);
