@@ -403,11 +403,17 @@ void displayDungeon() {
             } else if (dungeon[currentFloor][y][x] == WALL_H) {
                 mvaddch(y, x, '_'); // Display wall h as '_'
             } else if (dungeon[currentFloor][y][x] == PLAYER) {
-                mvaddch(y, x, 'P'); // Display player h as 'P'
+                mvaddch(y, x, 'P'); // Display player as 'P'
             } else if (dungeon[currentFloor][y][x] == DOWN_STAIR) {
-                mvaddch(y, x, '<'); // Display down stair h as '<'
+                mvaddch(y, x, '<'); // Display down stair as '<'
             } else if (dungeon[currentFloor][y][x] == UP_STAIR) {
-                mvaddch(y, x, '>'); // Display up stair h as '>'
+                mvaddch(y, x, '>'); // Display up stair as '>'
+            } else if (dungeon[currentFloor][y][x] == COLUMN) {
+                mvaddch(y, x, 'O'); // Display column as 'O'
+            } else if (dungeon[currentFloor][y][x] == GOLD) {
+                mvaddch(y, x, 'G'); // Display gold as 'G'
+            } else if (dungeon[currentFloor][y][x] == BLACK_GOLD) {
+                mvaddch(y, x, 'B'); // Display black gold as 'B'
             }
         }
     }
