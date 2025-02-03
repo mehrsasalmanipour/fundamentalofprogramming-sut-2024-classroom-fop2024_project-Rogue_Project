@@ -38,6 +38,10 @@ int copyDungeon[FLOORS_NUM][DUNGEON_HEIGHT][DUNGEON_WIDTH];
 //    // Other player properties like health, name, etc.
 //} Player;
 
+// Stairs
+Staircase staircases[FLOORS_NUM * 2];  // Array to store staircases (2 per floor)
+int staircaseCount = 0;                // Counter for staircases
+
 // List of rooms
 Room rooms[MAX_ROOMS];
 int roomCount = 0;
@@ -471,16 +475,43 @@ void copyDung() {
 void movePlayer(Player *player, int newX, int newY) {
     // Check if the new position is within bounds and not a wall
     if (newX >= 0 && newX < DUNGEON_WIDTH && newY >= 0 && newY < DUNGEON_HEIGHT) {
-        if (dungeon[currentFloor][newY][newX] == FLOOR || dungeon[currentFloor][newY][newX] == CORRIDOR || dungeon[currentFloor][newY][newX] == DOOR) {
-            // Clear the previous position
-            dungeon[currentFloor][player->y][player->x] = copyDungeon[currentFloor][player->y][player->x];
+        if (dungeon[currentFloor][newY][newX] == FLOOR || dungeon[currentFloor][newY][newX] == CORRIDOR || dungeon[currentFloor][newY][newX] == DOOR || dungeon[currentFloor][newY][newX] == UP_STAIR || dungeon[currentFloor][newY][newX] == DOWN_STAIR) {
+            if (dungeon[currentFloor][newY][newX] == UP_STAIR) {
+                int j = 0;
+                dungeon[currentFloor][player->y][player->x] = copyDungeon[currentFloor][player->y][player->x];
+                currentFloor += 1;
+                for (int i = 0; i < staircaseCount; i++) {
+                    if (staircases[i].floor == currentFloor && staircases[i].type == DOWN_STAIR) {
+                        j = i;
+                    }
+                }
+                player->x = staircases[j].x;
+                player->y = staircases[j].y;
+                dungeon[currentFloor][player->y][player->x] = PLAYER;
 
-            // Update player position
-            player->x = newX;
-            player->y = newY;
+            } else if (dungeon[currentFloor][newY][newX] == DOWN_STAIR) {
+                int j = 0;
+                dungeon[currentFloor][player->y][player->x] = copyDungeon[currentFloor][player->y][player->x];
+                currentFloor -= 1;
+                for (int i = 0; i < staircaseCount; i++) {
+                    if (staircases[i].floor == currentFloor && staircases[i].type == UP_STAIR) {
+                        j = i;
+                    }
+                }
+                player->x = staircases[j].x;
+                player->y = staircases[j].y;
+                dungeon[currentFloor][player->y][player->x] = PLAYER;
+            } else {
+                // Clear the previous position
+                dungeon[currentFloor][player->y][player->x] = copyDungeon[currentFloor][player->y][player->x];
 
-            // Mark the new player position
-            dungeon[currentFloor][player->y][player->x] = PLAYER;
+                // Update player position
+                player->x = newX;
+                player->y = newY;
+
+                // Mark the new player position
+                dungeon[currentFloor][player->y][player->x] = PLAYER;
+            }
         }
     }
 }
@@ -506,4 +537,55 @@ void handleInput(Player *player, int *running) {
 
     // Display the dungeon after the move
     displayDungeon();
+}
+
+// Function to initialize stairs in room
+void placeStairs() {
+    if (roomCount > 0) {
+        Room firstRoom = rooms[0];
+        Room lastRoom = rooms[roomCount - 1];
+
+        Staircase newStaircase;
+
+        if (currentFloor == 0) {
+            int x1 = lastRoom.x_min;
+            int x2 = lastRoom.x_max;
+            int y1 = lastRoom.y_min;
+            int y2 = lastRoom.y_max;
+
+            int randX = x1 + 1 + rand() % (x2 - x1 - 2);
+            int randY = y1 + 1 + rand() % (y2 - y1 - 2);
+
+            if (dungeon[currentFloor][randY][randX] == FLOOR) {
+                newStaircase.x = randX;
+                newStaircase.y = randY;
+                newStaircase.type = UP_STAIR;
+                newStaircase.floor = currentFloor;
+
+                staircases[staircaseCount++] = newStaircase;
+
+                dungeon[currentFloor][randY][randX] = UP_STAIR;
+            }
+
+        } else if (currentFloor == 1) {
+            int x1 = firstRoom.x_min;
+            int x2 = firstRoom.x_max;
+            int y1 = firstRoom.y_min;
+            int y2 = firstRoom.y_max;
+
+            int randX = x1 + 1 + rand() % (x2 - x1 - 2);
+            int randY = y1 + 1 + rand() % (y2 - y1 - 2);
+
+            if (dungeon[currentFloor][randY][randX] == FLOOR) {
+                newStaircase.x = randX;
+                newStaircase.y = randY;
+                newStaircase.type = DOWN_STAIR;
+                newStaircase.floor = currentFloor;
+
+                staircases[staircaseCount++] = newStaircase;
+
+                dungeon[currentFloor][randY][randX] = DOWN_STAIR;
+            }
+        }
+    }
 }
