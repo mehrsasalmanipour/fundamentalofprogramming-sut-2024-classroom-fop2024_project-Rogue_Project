@@ -23,6 +23,7 @@
 #define COLUMN 'O'
 #define GOLD 'G'
 #define BLACK_GOLD 'B'
+#define TRAP 'T'
 
 // menu and login
 void drawMenu(const char *menuItems[], int menuSize, int highlight);
@@ -61,6 +62,8 @@ typedef struct {
     int x;
     int y;
     int gold;
+    int health;
+    int hunger;
     // Other player properties like health, name, etc.
 } Player;
 
@@ -109,14 +112,15 @@ void displayDungeon();
 int allRoomsConnected(UnionFind* uf, int roomCount);
 void resetDungeon();
 void copyDung();
-void movePlayer(Player *player, int newX, int newY);
 void handleInput(Player *player, int *running);
 void placeStairs();
 void addColumns();
 void addGold();
+void addTraps();
 
 // player
 void placePlayerInFirstRoom(Player *player);
+void movePlayer(Player *player, int newX, int newY);
 
 /* void addColumnsToRooms(GameState *game);
 void initializePlayer(GameState *game);
