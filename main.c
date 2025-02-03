@@ -4,17 +4,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include <time.h>
 #include "functions.h"
 
 int main() {
-    srand(time(NULL));
     initscr();
     cbreak();
     noecho();
     keypad(stdscr, TRUE);
     curs_set(0);
-
+    
     if (has_colors()) {
         start_color();
         init_pair(1, COLOR_MAGENTA, COLOR_BLACK);
@@ -33,29 +31,7 @@ int main() {
             clear();
             playerIsRegistered = login();
         } else if (mainChoice == 2) {
-            staircaseCount = 0;
-            Player player;
-
-            while(currentFloor < FLOORS_NUM) {
-                roomCount = 0;
-                initDungeon();
-                Rect fullDungeon = {0, DUNGEON_WIDTH, 0, DUNGEON_HEIGHT};
-                splitDungeon(fullDungeon);
-                connectRooms(rooms, roomCount);
-                placeStairs();
-                copyDung();
-                if (currentFloor == 0) {
-                    placePlayerInFirstRoom(&player);
-                }
-                currentFloor++;
-            }
-            currentFloor = 0;
-            displayDungeon();
-            int running = 1;
-            while (running) {
-                handleInput(&player, &running);
-                refresh();
-            }
+            //code
         } else if (mainChoice == 3) {
             break;
         }
