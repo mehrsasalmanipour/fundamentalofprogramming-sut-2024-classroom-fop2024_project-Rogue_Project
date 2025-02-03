@@ -60,6 +60,13 @@ typedef struct {
     // Other player properties like health, name, etc.
 } Player;
 
+// Stairs
+typedef struct {
+    int x, y;          // Coordinates of the staircase
+    char type;         // Type of staircase ('<' for down, '>' for up)
+    int floor;         // Floor where the staircase is located
+} Staircase;
+
 //typedef enum {
 //    NORMAL_FOOD,
 //    HEALING_FOOD,
@@ -82,6 +89,8 @@ extern int copyDungeon[FLOORS_NUM][DUNGEON_HEIGHT][DUNGEON_WIDTH];
 extern int currentFloor;
 extern Room rooms[MAX_ROOMS];  // Declare rooms array as extern
 extern int roomCount;
+extern Staircase staircases[FLOORS_NUM * 2];  // Array to store staircases (2 per floor)
+extern int staircaseCount;                // Counter for staircases
 
 //// map
 void initDungeon();
@@ -98,6 +107,7 @@ void resetDungeon();
 void copyDung();
 void movePlayer(Player *player, int newX, int newY);
 void handleInput(Player *player, int *running);
+void placeStairs();
 
 // player
 void placePlayerInFirstRoom(Player *player);
