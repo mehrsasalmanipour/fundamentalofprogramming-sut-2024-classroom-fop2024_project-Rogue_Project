@@ -5,38 +5,9 @@
 #include <math.h>
 #include "functions.h"
 
-//// Define the dungeon grid size
-//#define DUNGEON_WIDTH 120
-//#define DUNGEON_HEIGHT 40
-//
-//// Cell types
-//#define WALL 1
-//#define FLOOR 0
-//#define CORRIDOR '#'
-//#define DOOR '+'
-//#define WALL_H '_'
-//#define WALL_V '|'
-//#define PLAYER 'P'
-
 // Dungeon grid
 int dungeon[FLOORS_NUM][DUNGEON_HEIGHT][DUNGEON_WIDTH];
 int copyDungeon[FLOORS_NUM][DUNGEON_HEIGHT][DUNGEON_WIDTH];
-
-//// Structure for a rectangle (sub-dungeon)
-//typedef struct {
-//    int x_min, x_max, y_min, y_max;
-//} Rect;
-//
-//typedef struct {
-//    int x_min, x_max, y_min, y_max;
-//    int index;
-//} Room;
-//
-//typedef struct {
-//    int x;
-//    int y;
-//    // Other player properties like health, name, etc.
-//} Player;
 
 // Stairs
 Staircase staircases[FLOORS_NUM * 2];  // Array to store staircases (2 per floor)
@@ -46,6 +17,8 @@ int staircaseCount = 0;                // Counter for staircases
 Room rooms[MAX_ROOMS];
 int roomCount = 0;
 int currentFloor = 0;
+
+char message[100];
 
 // Function to initialize the dungeon with walls
 void initDungeon() {
@@ -787,6 +760,7 @@ void movePlayer(Player *player, int newX, int newY) {
             dungeon[currentFloor][newY][newX] == SUPER_FOOD) {
 
             if (dungeon[currentFloor][newY][newX] == UP_STAIR) {
+                snprintf(message, sizeof(message), "You entered up floor!");
                 int j = 0;
                 dungeon[currentFloor][player->y][player->x] = copyDungeon[currentFloor][player->y][player->x];
                 currentFloor += 1;
@@ -800,6 +774,7 @@ void movePlayer(Player *player, int newX, int newY) {
                 dungeon[currentFloor][player->y][player->x] = PLAYER;
 
             } else if (dungeon[currentFloor][newY][newX] == DOWN_STAIR) {
+                snprintf(message, sizeof(message), "You entered down floor!");
                 int j = 0;
                 dungeon[currentFloor][player->y][player->x] = copyDungeon[currentFloor][player->y][player->x];
                 currentFloor -= 1;
@@ -814,6 +789,7 @@ void movePlayer(Player *player, int newX, int newY) {
             } else if (dungeon[currentFloor][newY][newX] == GOLD) {
                 int coins = rand() % 3 + 1;
                 player->gold += coins;
+                snprintf(message, sizeof(message), "You gained %d coins!", coins);
                 dungeon[currentFloor][player->y][player->x] = copyDungeon[currentFloor][player->y][player->x];
                 player->x = newX;
                 player->y = newY;
@@ -821,6 +797,7 @@ void movePlayer(Player *player, int newX, int newY) {
             } else if (dungeon[currentFloor][newY][newX] == BLACK_GOLD) {
                 int coins = rand() % 3 + 5;
                 player->gold += coins;
+                snprintf(message, sizeof(message), "You gained %d coins!", coins);
                 dungeon[currentFloor][player->y][player->x] = copyDungeon[currentFloor][player->y][player->x];
                 player->x = newX;
                 player->y = newY;
@@ -890,6 +867,7 @@ void movePlayer(Player *player, int newX, int newY) {
 
 void handleInput(Player *player, int *running) {
     int ch = getch();  // Get user input
+    snprintf(message, sizeof(message), " ");
 
     switch (ch) {
         case '8': case 'j': movePlayer(player, player->x, player->y - 1); checkFoodSpoilage(player); break;
