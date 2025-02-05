@@ -9,6 +9,7 @@
 #define FLOORS_NUM 2
 
 #define MAX_ROOMS 10
+#define MAX_FOOD_ITEMS 5
 
 // Cell types
 #define WALL 1
@@ -24,6 +25,9 @@
 #define GOLD 'G'
 #define BLACK_GOLD 'B'
 #define TRAP 'T'
+#define NORMAL_FOOD 'F'  // type 0
+#define SUPER_FOOD 'A'  // type 1
+#define MAGIC_FOOD 'M'  // type 2
 
 // menu and login
 void drawMenu(const char *menuItems[], int menuSize, int highlight);
@@ -59,12 +63,20 @@ typedef struct {
 UnionFind* createUnionFind(int n);
 
 typedef struct {
+    int type;   // Type of food
+    int healthEffect; // Amount of health the food restores
+    int spoilTime;    // Time after which the food spoils (only relevant for normal food)
+    int timeStored;   // Time passed since the food was obtained
+} Food;
+
+typedef struct {
     int x;
     int y;
     int gold;
     int health;
     int hunger;
-    // Other player properties like health, name, etc.
+    int foodCount;
+    Food foodInventory[MAX_FOOD_ITEMS];
 } Player;
 
 // Stairs
@@ -73,22 +85,6 @@ typedef struct {
     char type;         // Type of staircase ('<' for down, '>' for up)
     int floor;         // Floor where the staircase is located
 } Staircase;
-
-//typedef enum {
-//    NORMAL_FOOD,
-//    HEALING_FOOD,
-//    MAGIC_FOOD,
-//    POISONOUS_FOOD
-//} FoodType;
-//
-//typedef struct {
-//    FoodType type;
-//    int hungerEffect;
-//    int healthEffect;
-//    char name[20];
-//    int x;
-//    int y;
-//} Food;
 
 // extern
 extern int dungeon[FLOORS_NUM][DUNGEON_HEIGHT][DUNGEON_WIDTH];
@@ -117,21 +113,14 @@ void placeStairs();
 void addColumns();
 void addGold();
 void addTraps();
+void addFood();
+void addFoodToInventory(Player *player, int type, int healthEffect, int spoilTime);
+void checkFoodSpoilage(Player *player);
+void eatFood(Player *player, int index);
+void displayInventory(Player *player);
 
 // player
 void placePlayerInFirstRoom(Player *player);
 void movePlayer(Player *player, int newX, int newY);
-
-/* void addColumnsToRooms(GameState *game);
-void initializePlayer(GameState *game);
-void movePlayer(GameState *game, char input);
-void addFoodToMap(GameState *game);
-void displayInventory(GameState *game);
-void eatFood(GameState *game, int index);
-void reduceHunger(GameState *game, int amount);
-void increaseHealth(GameState *game, int amount);
-void increaseHunger(GameState *game);
-void decreasePlayerHealth(GameState *game); */
-
 
 #endif
