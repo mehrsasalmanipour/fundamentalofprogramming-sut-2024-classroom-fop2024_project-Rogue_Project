@@ -759,6 +759,18 @@ void movePlayer(Player *player, int newX, int newY) {
             dungeon[currentFloor][newY][newX] == MAGIC_FOOD ||
             dungeon[currentFloor][newY][newX] == SUPER_FOOD) {
 
+            if (copyDungeon[currentFloor][player->y][player->x] == DOOR) {
+                if ((dungeon[currentFloor][newY][newX] == FLOOR ||
+                     dungeon[currentFloor][newY][newX] == GOLD ||
+                     dungeon[currentFloor][newY][newX] == BLACK_GOLD ||
+                     dungeon[currentFloor][newY][newX] == TRAP ||
+                     dungeon[currentFloor][newY][newX] == NORMAL_FOOD ||
+                     dungeon[currentFloor][newY][newX] == SUPER_FOOD ||
+                     dungeon[currentFloor][newY][newX] == MAGIC_FOOD)) {
+                    snprintf(message, sizeof(message), "You entered new room!");
+                }
+            }
+
             if (dungeon[currentFloor][newY][newX] == UP_STAIR) {
                 snprintf(message, sizeof(message), "You entered up floor!");
                 int j = 0;
