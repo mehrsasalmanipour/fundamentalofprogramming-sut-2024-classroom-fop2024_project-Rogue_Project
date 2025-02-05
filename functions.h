@@ -94,6 +94,7 @@ extern Room rooms[MAX_ROOMS];  // Declare rooms array as extern
 extern int roomCount;
 extern Staircase staircases[FLOORS_NUM * 2];  // Array to store staircases (2 per floor)
 extern int staircaseCount;                // Counter for staircases
+extern char message[100];
 
 //// map
 void initDungeon();
