@@ -426,6 +426,12 @@ void displayDungeon() {
                 attron((COLOR_PAIR(2)));
                 mvaddch(y, x, 'T'); // Display trap as 'T'
                 attroff(COLOR_PAIR(2));
+            } else if (dungeon[currentFloor][y][x] == NORMAL_FOOD) {
+                mvaddch(y, x, 'F'); // Display normal food as 'F'
+            } else if (dungeon[currentFloor][y][x] == SUPER_FOOD) {
+                mvaddch(y, x, 'A'); // Display super food as 'A'
+            } else if (dungeon[currentFloor][y][x] == MAGIC_FOOD) {
+                mvaddch(y, x, 'M'); // Display magic food trap as 'M'
             }
         }
     }
@@ -484,94 +490,6 @@ void copyDung() {
             copyDungeon[currentFloor][y][x] = dungeon[currentFloor][y][x];
         }
     }
-}
-
-void movePlayer(Player *player, int newX, int newY) {
-    // Check if the new position is within bounds and not a wall
-    if (newX >= 0 && newX < DUNGEON_WIDTH && newY >= 0 && newY < DUNGEON_HEIGHT) {
-        if (dungeon[currentFloor][newY][newX] == FLOOR || dungeon[currentFloor][newY][newX] == CORRIDOR || dungeon[currentFloor][newY][newX] == DOOR || dungeon[currentFloor][newY][newX] == UP_STAIR || dungeon[currentFloor][newY][newX] == DOWN_STAIR || dungeon[currentFloor][newY][newX] == GOLD || dungeon[currentFloor][newY][newX] == BLACK_GOLD || dungeon[currentFloor][newY][newX] == TRAP) {
-
-            if (dungeon[currentFloor][newY][newX] == UP_STAIR) {
-                int j = 0;
-                dungeon[currentFloor][player->y][player->x] = copyDungeon[currentFloor][player->y][player->x];
-                currentFloor += 1;
-                for (int i = 0; i < staircaseCount; i++) {
-                    if (staircases[i].floor == currentFloor && staircases[i].type == DOWN_STAIR) {
-                        j = i;
-                    }
-                }
-                player->x = staircases[j].x;
-                player->y = staircases[j].y;
-                dungeon[currentFloor][player->y][player->x] = PLAYER;
-
-            } else if (dungeon[currentFloor][newY][newX] == DOWN_STAIR) {
-                int j = 0;
-                dungeon[currentFloor][player->y][player->x] = copyDungeon[currentFloor][player->y][player->x];
-                currentFloor -= 1;
-                for (int i = 0; i < staircaseCount; i++) {
-                    if (staircases[i].floor == currentFloor && staircases[i].type == UP_STAIR) {
-                        j = i;
-                    }
-                }
-                player->x = staircases[j].x;
-                player->y = staircases[j].y;
-                dungeon[currentFloor][player->y][player->x] = PLAYER;
-            } else if (dungeon[currentFloor][newY][newX] == GOLD) {
-                int coins = rand() % 3 + 1;
-                player->gold += coins;
-                dungeon[currentFloor][player->y][player->x] = copyDungeon[currentFloor][player->y][player->x];
-                player->x = newX;
-                player->y = newY;
-                dungeon[currentFloor][player->y][player->x] = PLAYER;
-            } else if (dungeon[currentFloor][newY][newX] == BLACK_GOLD) {
-                int coins = rand() % 3 + 5;
-                player->gold += coins;
-                dungeon[currentFloor][player->y][player->x] = copyDungeon[currentFloor][player->y][player->x];
-                player->x = newX;
-                player->y = newY;
-                dungeon[currentFloor][player->y][player->x] = PLAYER;
-            } else if (dungeon[currentFloor][newY][newX] == TRAP) {
-                player->health -= 5;
-                dungeon[currentFloor][player->y][player->x] = copyDungeon[currentFloor][player->y][player->x];
-                player->x = newX;
-                player->y = newY;
-                dungeon[currentFloor][player->y][player->x] = PLAYER;
-            } else {
-                // Clear the previous position
-                dungeon[currentFloor][player->y][player->x] = copyDungeon[currentFloor][player->y][player->x];
-
-                // Update player position
-                player->x = newX;
-                player->y = newY;
-
-                // Mark the new player position
-                dungeon[currentFloor][player->y][player->x] = PLAYER;
-            }
-        }
-    }
-}
-
-void handleInput(Player *player, int *running) {
-    int ch = getch();  // Get user input
-
-    switch (ch) {
-        case '8': case 'j': movePlayer(player, player->x, player->y - 1); break;
-        case '2': case 'k': movePlayer(player, player->x, player->y + 1); break;
-        case '4': case 'h': movePlayer(player, player->x - 1, player->y); break;
-        case '6': case 'l': movePlayer(player, player->x + 1, player->y); break;
-        case '7': case 'y': movePlayer(player, player->x - 1, player->y - 1); break;
-        case '9': case 'u': movePlayer(player, player->x + 1, player->y - 1); break;
-        case '1': case 'b': movePlayer(player, player->x - 1, player->y + 1); break;
-        case '3': case 'n': movePlayer(player, player->x + 1, player->y + 1); break;
-        case 'q':  // Quit the game if 'q' is pressed
-            *running = 0;  // Set running to 0 to break the loop
-            break;
-        default:
-            break;  // No movement
-    }
-
-    // Display the dungeon after the move
-    displayDungeon();
 }
 
 // Function to initialize stairs in room
@@ -682,7 +600,7 @@ void addGold() {
     }
 }
 
-// Function to initialize gold in room
+// Function to initialize trap in room
 void addTraps() {
     for (int i = 0; i < roomCount - 1; i++) {
         int trapCount = rand() % 3;
@@ -702,5 +620,293 @@ void addTraps() {
                 dungeon[currentFloor][randY][randX] = TRAP;
             }
         }
+    }
+}
+
+// Function to initialize food in room
+void addFood() {
+    for (int i = 0; i < roomCount - 1; i++) {
+        int normalFoodCount = rand() % 3;
+
+        Room currentRoom = rooms[i];
+
+        int x1 = currentRoom.x_min;
+        int x2 = currentRoom.x_max;
+        int y1 = currentRoom.y_min;
+        int y2 = currentRoom.y_max;
+
+        for (int j = 0; j < normalFoodCount; j++) {
+            int randX = x1 + 1 + rand() % (x2 - x1 - 2);
+            int randY = y1 + 1 + rand() % (y2 - y1 - 2);
+
+            if (dungeon[currentFloor][randY][randX] == FLOOR) {
+                dungeon[currentFloor][randY][randX] = NORMAL_FOOD;
+            }
+        }
+
+        int superFoodCount = rand() % 2;
+
+        for (int j = 0; j < superFoodCount; j++) {
+            int randX = x1 + 1 + rand() % (x2 - x1 - 2);
+            int randY = y1 + 1 + rand() % (y2 - y1 - 2);
+
+            if (dungeon[currentFloor][randY][randX] == FLOOR) {
+                dungeon[currentFloor][randY][randX] = SUPER_FOOD;
+            }
+        }
+
+        int magicFoodCount = rand() % 2;
+
+        for (int j = 0; j < magicFoodCount; j++) {
+            int randX = x1 + 1 + rand() % (x2 - x1 - 2);
+            int randY = y1 + 1 + rand() % (y2 - y1 - 2);
+
+            if (dungeon[currentFloor][randY][randX] == FLOOR) {
+                dungeon[currentFloor][randY][randX] = MAGIC_FOOD;
+            }
+        }
+    }
+}
+
+void addFoodToInventory(Player *player, int type, int healthEffect, int spoilTime) {
+    if (player->foodCount < MAX_FOOD_ITEMS) {
+        player->foodInventory[player->foodCount].type = type;
+        player->foodInventory[player->foodCount].healthEffect = healthEffect;
+        player->foodInventory[player->foodCount].spoilTime = spoilTime;
+        player->foodInventory[player->foodCount].timeStored = 0;
+        player->foodCount++;
+    } else {
+        // If the inventory is full, print a message (you could also return a status)
+        mvprintw(DUNGEON_HEIGHT + 5, 0, "Food inventory is full! Cannot add more food.");
+    }
+    refresh();
+}
+
+void checkFoodSpoilage(Player *player) {
+    for (int i = 0; i < player->foodCount; i++) {
+        Food *food = &player->foodInventory[i];
+
+        // If it's normal food, check if it has spoiled
+        if (food->type == 0) {
+            food->timeStored++;
+
+            // Spoil after a certain time (e.g., 10 turns)
+            if (food->timeStored >= food->spoilTime) {
+                food->type = 3;
+                food->healthEffect = -5;  // Rotten food causes health damage
+            }
+        }
+    }
+}
+
+void eatFood(Player *player, int index) {
+    player->health += player->foodInventory[index].healthEffect;  // Restore health
+    if (player->health > 100) {
+        player->health = 100;
+    }
+
+    // Remove the eaten food from the inventory
+    if (index >= 0 && index < player->foodCount) {
+        // Shift all items after the eaten food one position to the left
+        for (int i = index; i < player->foodCount - 1; i++) {
+            player->foodInventory[i] = player->foodInventory[i + 1];
+        }
+        player->foodCount--;  // Decrease the food count
+    }
+}
+
+const char* foodTypeToString(int type) {
+    switch (type) {
+        case 0: return "Normal Food";
+        case 1: return "Super Food";
+        case 2: return "Magic Food";
+        case 3: return "Rotten Food";
+        default: return "Unknown Food";
+    }
+}
+
+void displayInventory(Player *player) {
+    int pos = 0;  // Current position in the inventory
+
+    while (true) {
+        clear();  // Clear the screen to display the inventory
+
+        mvprintw(0, 0, "Player Inventory:");
+        for (int i = 0; i < player->foodCount; i++) {
+            if (i == pos) {
+                mvprintw(i + 1, 0, "> %s", foodTypeToString(player->foodInventory[i].type));  // Highlight the selected item
+            } else {
+                mvprintw(i + 1, 0, "  %s", foodTypeToString(player->foodInventory[i].type));
+            }
+        }
+
+        if (player->foodCount == 0) {
+            mvprintw(1, 0, "Inventory is empty.");
+        }
+
+        mvprintw(player->foodCount + 3, 0, "Use arrow keys to navigate and Enter to select.");
+        mvprintw(player->foodCount + 4, 0, "Press any other key to return.");
+        refresh();  // Refresh the screen to show the inventory
+
+        int input = getch();  // Wait for the player to press a key
+
+        if (input == KEY_UP) {  // Handle up arrow key
+            if (pos > 0) {
+                pos--;
+            }
+        } else if (input == KEY_DOWN) {  // Handle down arrow key
+            if (pos < player->foodCount - 1) {
+                pos++;
+            }
+        } else if (input == '\n') {  // Handle Enter key
+            if (pos < player->foodCount) {
+                eatFood(player, pos);  // Eat the selected food
+                return;  // Exit the inventory menu after eating
+            }
+            break;
+        }
+        else {
+            break;  // Exit the inventory menu on any other key
+        }
+    }
+}
+
+void movePlayer(Player *player, int newX, int newY) {
+    // Check if the new position is within bounds and not a wall
+    if (newX >= 0 && newX < DUNGEON_WIDTH && newY >= 0 && newY < DUNGEON_HEIGHT) {
+        if (dungeon[currentFloor][newY][newX] == FLOOR ||
+            dungeon[currentFloor][newY][newX] == CORRIDOR ||
+            dungeon[currentFloor][newY][newX] == DOOR ||
+            dungeon[currentFloor][newY][newX] == UP_STAIR ||
+            dungeon[currentFloor][newY][newX] == DOWN_STAIR ||
+            dungeon[currentFloor][newY][newX] == GOLD ||
+            dungeon[currentFloor][newY][newX] == BLACK_GOLD ||
+            dungeon[currentFloor][newY][newX] == TRAP ||
+            dungeon[currentFloor][newY][newX] == NORMAL_FOOD ||
+            dungeon[currentFloor][newY][newX] == MAGIC_FOOD ||
+            dungeon[currentFloor][newY][newX] == SUPER_FOOD) {
+
+            if (dungeon[currentFloor][newY][newX] == UP_STAIR) {
+                int j = 0;
+                dungeon[currentFloor][player->y][player->x] = copyDungeon[currentFloor][player->y][player->x];
+                currentFloor += 1;
+                for (int i = 0; i < staircaseCount; i++) {
+                    if (staircases[i].floor == currentFloor && staircases[i].type == DOWN_STAIR) {
+                        j = i;
+                    }
+                }
+                player->x = staircases[j].x;
+                player->y = staircases[j].y;
+                dungeon[currentFloor][player->y][player->x] = PLAYER;
+
+            } else if (dungeon[currentFloor][newY][newX] == DOWN_STAIR) {
+                int j = 0;
+                dungeon[currentFloor][player->y][player->x] = copyDungeon[currentFloor][player->y][player->x];
+                currentFloor -= 1;
+                for (int i = 0; i < staircaseCount; i++) {
+                    if (staircases[i].floor == currentFloor && staircases[i].type == UP_STAIR) {
+                        j = i;
+                    }
+                }
+                player->x = staircases[j].x;
+                player->y = staircases[j].y;
+                dungeon[currentFloor][player->y][player->x] = PLAYER;
+            } else if (dungeon[currentFloor][newY][newX] == GOLD) {
+                int coins = rand() % 3 + 1;
+                player->gold += coins;
+                dungeon[currentFloor][player->y][player->x] = copyDungeon[currentFloor][player->y][player->x];
+                player->x = newX;
+                player->y = newY;
+                dungeon[currentFloor][player->y][player->x] = PLAYER;
+            } else if (dungeon[currentFloor][newY][newX] == BLACK_GOLD) {
+                int coins = rand() % 3 + 5;
+                player->gold += coins;
+                dungeon[currentFloor][player->y][player->x] = copyDungeon[currentFloor][player->y][player->x];
+                player->x = newX;
+                player->y = newY;
+                dungeon[currentFloor][player->y][player->x] = PLAYER;
+            } else if (dungeon[currentFloor][newY][newX] == TRAP) {
+                player->health -= 5;
+                dungeon[currentFloor][player->y][player->x] = copyDungeon[currentFloor][player->y][player->x];
+                player->x = newX;
+                player->y = newY;
+                dungeon[currentFloor][player->y][player->x] = PLAYER;
+            } else if (dungeon[currentFloor][newY][newX] == NORMAL_FOOD) {
+                if (player->foodCount < MAX_FOOD_ITEMS) {
+                    addFoodToInventory(player, 0, 10, 20);
+                    dungeon[currentFloor][player->y][player->x] = copyDungeon[currentFloor][player->y][player->x];
+                    player->x = newX;
+                    player->y = newY;
+                    dungeon[currentFloor][player->y][player->x] = PLAYER;
+                    copyDungeon[currentFloor][player->y][player->x] = FLOOR;
+                } else {
+                    dungeon[currentFloor][player->y][player->x] = copyDungeon[currentFloor][player->y][player->x];
+                    player->x = newX;
+                    player->y = newY;
+                    dungeon[currentFloor][player->y][player->x] = PLAYER;
+                }
+            } else if (dungeon[currentFloor][newY][newX] == SUPER_FOOD) {
+                if (player->foodCount < MAX_FOOD_ITEMS) {
+                    addFoodToInventory(player, 1, 50, 0);
+                    dungeon[currentFloor][player->y][player->x] = copyDungeon[currentFloor][player->y][player->x];
+                    player->x = newX;
+                    player->y = newY;
+                    dungeon[currentFloor][player->y][player->x] = PLAYER;
+                    copyDungeon[currentFloor][player->y][player->x] = FLOOR;
+                }  else {
+                    dungeon[currentFloor][player->y][player->x] = copyDungeon[currentFloor][player->y][player->x];
+                    player->x = newX;
+                    player->y = newY;
+                    dungeon[currentFloor][player->y][player->x] = PLAYER;
+                }
+            } else if (dungeon[currentFloor][newY][newX] == MAGIC_FOOD) {
+                if (player->foodCount < MAX_FOOD_ITEMS) {
+                    addFoodToInventory(player, 2, 100, 0);
+                    dungeon[currentFloor][player->y][player->x] = copyDungeon[currentFloor][player->y][player->x];
+                    player->x = newX;
+                    player->y = newY;
+                    dungeon[currentFloor][player->y][player->x] = PLAYER;
+                    copyDungeon[currentFloor][player->y][player->x] = FLOOR;
+                } else {
+                    dungeon[currentFloor][player->y][player->x] = copyDungeon[currentFloor][player->y][player->x];
+                    player->x = newX;
+                    player->y = newY;
+                    dungeon[currentFloor][player->y][player->x] = PLAYER;
+                }
+            } else {
+                // Clear the previous position
+                dungeon[currentFloor][player->y][player->x] = copyDungeon[currentFloor][player->y][player->x];
+
+                // Update player position
+                player->x = newX;
+                player->y = newY;
+
+                // Mark the new player position
+                dungeon[currentFloor][player->y][player->x] = PLAYER;
+            }
+        }
+    }
+}
+
+void handleInput(Player *player, int *running) {
+    int ch = getch();  // Get user input
+
+    switch (ch) {
+        case '8': case 'j': movePlayer(player, player->x, player->y - 1); checkFoodSpoilage(player); break;
+        case '2': case 'k': movePlayer(player, player->x, player->y + 1); checkFoodSpoilage(player); break;
+        case '4': case 'h': movePlayer(player, player->x - 1, player->y); checkFoodSpoilage(player); break;
+        case '6': case 'l': movePlayer(player, player->x + 1, player->y); checkFoodSpoilage(player); break;
+        case '7': case 'y': movePlayer(player, player->x - 1, player->y - 1); checkFoodSpoilage(player); break;
+        case '9': case 'u': movePlayer(player, player->x + 1, player->y - 1); checkFoodSpoilage(player); break;
+        case '1': case 'b': movePlayer(player, player->x - 1, player->y + 1); checkFoodSpoilage(player); break;
+        case '3': case 'n': movePlayer(player, player->x + 1, player->y + 1); checkFoodSpoilage(player); break;
+        case 'f':
+            displayInventory(player);
+            break;
+        case 'q':  // Quit the game if 'q' is pressed
+            *running = 0;  // Set running to 0 to break the loop
+            break;
+        default:
+            break;  // No movement
     }
 }
