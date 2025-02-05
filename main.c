@@ -62,11 +62,12 @@ int main() {
             displayDungeon();
             int running = 1;
             while (running) {
-                mvprintw(DUNGEON_HEIGHT, 0, "Gold: %d | Health: %d", player.gold, player.health);
-                handleInput(&player, &running);
                 clear();
+                mvprintw(DUNGEON_HEIGHT, 0, "Gold: %d | Health: %d", player.gold, player.health);
+                mvprintw(DUNGEON_HEIGHT + 2, 0, "Message: %s", message);
                 displayDungeon();
                 refresh();
+                handleInput(&player, &running);
             }
         } else if (mainChoice == 3) {
             break;
