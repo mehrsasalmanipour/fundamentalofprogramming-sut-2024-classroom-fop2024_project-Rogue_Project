@@ -49,6 +49,7 @@ int main() {
                 connectRooms(rooms, roomCount);
                 placeStairs();
                 addColumns();
+                addFood();
                 copyDung();
                 addGold();
                 addTraps();
@@ -63,6 +64,8 @@ int main() {
             while (running) {
                 mvprintw(DUNGEON_HEIGHT, 0, "Gold: %d | Health: %d", player.gold, player.health);
                 handleInput(&player, &running);
+                clear();
+                displayDungeon();
                 refresh();
             }
         } else if (mainChoice == 3) {
