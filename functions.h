@@ -37,6 +37,11 @@
 #define SPEED_POTION 'V'
 #define DAMAGE_POTION 'U'
 #define WINDOW '='
+#define SNAKE 'S'
+#define ZOMBIE 'Z'
+#define VAMPIRE 'E'
+#define DRAGON 'Y'
+#define PHANTOM 'P'
 
 // menu and login
 void drawMenu(const char *menuItems[], int menuSize, int highlight);
@@ -155,6 +160,7 @@ void addPotionToInventory(Player *player, int type);
 void displayPotionInventory(Player *player);
 void playerColor(Player *player);
 void addWindow();
+void addMonster();
 
 void handleGuestInput(Player *player, int *running);
 
