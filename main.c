@@ -57,6 +57,8 @@ int main() {
 
                 connectRooms(rooms, roomCount);
 
+                addWindow();
+
                 placeStairs();
 
                 addColumns();
