@@ -153,6 +153,11 @@ void addPotionToInventory(Player *player, int type);
 void displayPotionInventory(Player *player);
 void playerColor(Player *player);
 
+void handleGuestInput(Player *player, int *running);
+
+void saveGame(Player *player);
+void loadGame(Player *player);
+
 // player
 void placePlayerInFirstRoom(Player *player);
 void movePlayer(Player *player, int newX, int newY);
