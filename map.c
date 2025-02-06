@@ -952,7 +952,7 @@ const char* weaponTypeToString(int type) {
 }
 
 void displayWeaponInventory(Player *player) {
-    int pos = 0;  // Current position in the inventory
+    int pos = player->wUsed;  // Current position in the inventory
 
     while (true) {
         clear();  // Clear the screen to display the inventory
