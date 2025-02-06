@@ -44,6 +44,7 @@ int main() {
             player.foodCount = 0;
             player.weaponCount = 0;
             player.potionCount = 0;
+            player.wUsed = 0;
 
             while(currentFloor < FLOORS_NUM) {
                 roomCount = 0;
