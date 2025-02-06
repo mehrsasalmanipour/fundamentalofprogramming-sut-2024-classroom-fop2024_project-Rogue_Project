@@ -648,7 +648,7 @@ void addColumns() {
 // Function to initialize gold in room
 void addGold() {
     for (int i = 0; i < roomCount - 1; i++) {
-        int goldCount = rand() % 4;
+        int goldCount = rand() % 5;
 
         Room currentRoom = rooms[i];
 
@@ -666,7 +666,7 @@ void addGold() {
             }
         }
 
-        int blackGoldCount = rand() % 2;
+        int blackGoldCount = rand() % 3;
 
         for (int j = 0; j < blackGoldCount; j++) {
             int randX = x1 + 1 + rand() % (x2 - x1 - 2);
@@ -1213,7 +1213,7 @@ void movePlayer(Player *player, int newX, int newY) {
                 player->y = staircases[j].y;
                 dungeon[currentFloor][player->y][player->x] = PLAYER;
             } else if (dungeon[currentFloor][newY][newX] == GOLD) {
-                int coins = rand() % 3 + 1;
+                int coins = rand() % 4 + 1;
                 player->gold += coins;
                 snprintf(message, sizeof(message), "You gained %d coins!", coins);
                 dungeon[currentFloor][player->y][player->x] = copyDungeon[currentFloor][player->y][player->x];
@@ -1221,7 +1221,7 @@ void movePlayer(Player *player, int newX, int newY) {
                 player->y = newY;
                 dungeon[currentFloor][player->y][player->x] = PLAYER;
             } else if (dungeon[currentFloor][newY][newX] == BLACK_GOLD) {
-                int coins = rand() % 3 + 5;
+                int coins = rand() % 4 + 5;
                 player->gold += coins;
                 snprintf(message, sizeof(message), "You gained %d coins!", coins);
                 dungeon[currentFloor][player->y][player->x] = copyDungeon[currentFloor][player->y][player->x];
