@@ -434,6 +434,8 @@ void displayDungeon(Player *player) {
                     mvaddch(y, x, 'V'); // Display speed potion as 'V'
                 } else if (dungeon[currentFloor][y][x] == DAMAGE_POTION) {
                     mvaddch(y, x, 'U'); // Display damage potion as 'U'
+                } else if (dungeon[currentFloor][y][x] == WINDOW) {
+                    mvaddch(y, x, '='); // Display damage potion as 'U'
                 }
             } else {
                 mvprintw(1 + dy, 1 + dx, " ");  // Display empty space for out-of-bounds tiles
@@ -511,6 +513,8 @@ void displayEntireDungeon(Player *player) {
                 mvaddch(y, x, 'V'); // Display speed potion as 'V'
             }  else if (dungeon[currentFloor][y][x] == DAMAGE_POTION) {
                 mvaddch(y, x, 'U'); // Display damage potion as 'U'
+            } else if (dungeon[currentFloor][y][x] == WINDOW) {
+                mvaddch(y, x, '='); // Display damage potion as 'U'
             }
         }
     }
@@ -598,8 +602,9 @@ void placeStairs() {
 
                 dungeon[currentFloor][randY][randX] = UP_STAIR;
             }
+        }
 
-        } else if (currentFloor > 0) {
+        if (currentFloor > 0 ) {
             int x1 = firstRoom.x_min;
             int x2 = firstRoom.x_max;
             int y1 = firstRoom.y_min;
@@ -640,6 +645,42 @@ void addColumns() {
 
             if (dungeon[currentFloor][randY][randX] == FLOOR) {
                 dungeon[currentFloor][randY][randX] = COLUMN;
+            }
+        }
+    }
+}
+
+void addWindow() {
+    for (int i = 0; i < roomCount - 1; i++) {
+        Room currentRoom = rooms[i];
+        int x1 = currentRoom.x_min;
+        int x2 = currentRoom.x_max;
+        int y1 = currentRoom.y_min;
+        int y2 = currentRoom.y_max;
+        int randDir = rand() % 4;
+        if (randDir == 0) {
+            int randX = x1 + 1 + rand() % (x2 - x1 - 2);
+
+            if (dungeon[currentFloor][y1][randX] == WALL_H) {
+                dungeon[currentFloor][y1][randX] = WINDOW;
+            }
+        } else if (randDir == 1) {
+            int randX = x1 + 1 + rand() % (x2 - x1 - 2);
+
+            if (dungeon[currentFloor][y2][randX] == WALL_H) {
+                dungeon[currentFloor][y2][randX] = WINDOW;
+            }
+        } else if (randDir == 2) {
+            int randY = y1 + 1 + rand() % (y2 - y1 - 2);
+
+            if (dungeon[currentFloor][randY][x1] == WALL_V) {
+                dungeon[currentFloor][randY][x1] = WINDOW;
+            }
+        } else if (randDir == 3) {
+            int randY = y1 + 1 + rand() % (y2 - y1 - 2);
+
+            if (dungeon[currentFloor][randY][x2] == WALL_V) {
+                dungeon[currentFloor][randY][x2] = WINDOW;
             }
         }
     }
