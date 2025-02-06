@@ -81,6 +81,8 @@ int main() {
 
                 addGold();
 
+                addMonster();
+
                 addTraps();
 
                 addPotion();
