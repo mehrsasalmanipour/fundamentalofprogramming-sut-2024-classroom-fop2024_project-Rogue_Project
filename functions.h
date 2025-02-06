@@ -98,6 +98,7 @@ typedef struct {
     int foodCount;
     Food foodInventory[MAX_FOOD_ITEMS];
     int weaponCount;
+    int wUsed;
     Weapon weaponInventory[5];
     int potionCount;
     Potion potionInventory[100];
