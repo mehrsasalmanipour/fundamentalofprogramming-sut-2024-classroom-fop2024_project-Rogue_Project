@@ -28,6 +28,14 @@
 #define NORMAL_FOOD 'F'  // type 0
 #define SUPER_FOOD 'A'  // type 1
 #define MAGIC_FOOD 'M'  // type 2
+#define MACE 'Q'
+#define DAGGER 'D'
+#define MAGIC_WAND 'l'
+#define NORMAL_ARROW 'R'
+#define SWORD 'J'
+#define HEALTH_POTION 'H'
+#define SPEED_POTION 'V'
+#define DAMAGE_POTION 'U'
 
 // menu and login
 void drawMenu(const char *menuItems[], int menuSize, int highlight);
@@ -70,13 +78,29 @@ typedef struct {
 } Food;
 
 typedef struct {
+    int type;
+} Weapon;
+
+typedef struct {
+    int type;
+    int healthEffect;
+    int limitTime;
+    int timeStored;
+} Potion;
+
+typedef struct {
     int x;
     int y;
+    int color;
     int gold;
     int health;
     int hunger;
     int foodCount;
     Food foodInventory[MAX_FOOD_ITEMS];
+    int weaponCount;
+    Weapon weaponInventory[5];
+    int potionCount;
+    Potion potionInventory[100];
 } Player;
 
 // Stairs
@@ -105,7 +129,8 @@ int find(UnionFind *uf, int x);
 void unionSets(UnionFind *uf, int x, int y);
 void carveCorridor(Room r1, Room r2);
 void connectRooms(Room rooms[], int roomCount);
-void displayDungeon();
+void displayDungeon(Player *player);
+void displayEntireDungeon(Player *player);
 int allRoomsConnected(UnionFind* uf, int roomCount);
 void resetDungeon();
 void copyDung();
@@ -119,6 +144,14 @@ void addFoodToInventory(Player *player, int type, int healthEffect, int spoilTim
 void checkFoodSpoilage(Player *player);
 void eatFood(Player *player, int index);
 void displayInventory(Player *player);
+void addWeaponType1();
+void addWeaponType2();
+void addWeaponToInventory(Player *player, int type);
+void displayWeaponInventory(Player *player);
+void addPotion();
+void addPotionToInventory(Player *player, int type);
+void displayPotionInventory(Player *player);
+void playerColor(Player *player);
 
 // player
 void placePlayerInFirstRoom(Player *player);
