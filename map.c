@@ -435,7 +435,17 @@ void displayDungeon(Player *player) {
                 } else if (dungeon[currentFloor][y][x] == DAMAGE_POTION) {
                     mvaddch(y, x, 'U'); // Display damage potion as 'U'
                 } else if (dungeon[currentFloor][y][x] == WINDOW) {
-                    mvaddch(y, x, '='); // Display damage potion as 'U'
+                    mvaddch(y, x, '=');
+                } else if (dungeon[currentFloor][y][x] == SNAKE) {
+                    mvaddch(y, x, 'S');
+                } else if (dungeon[currentFloor][y][x] == ZOMBIE) {
+                    mvaddch(y, x, 'Z');
+                } else if (dungeon[currentFloor][y][x] == VAMPIRE) {
+                    mvaddch(y, x, 'E');
+                } else if (dungeon[currentFloor][y][x] == DRAGON) {
+                    mvaddch(y, x, 'Y');
+                } else if (dungeon[currentFloor][y][x] == PHANTOM) {
+                    mvaddch(y, x, 'P');
                 }
             } else {
                 mvprintw(1 + dy, 1 + dx, " ");  // Display empty space for out-of-bounds tiles
@@ -515,6 +525,16 @@ void displayEntireDungeon(Player *player) {
                 mvaddch(y, x, 'U'); // Display damage potion as 'U'
             } else if (dungeon[currentFloor][y][x] == WINDOW) {
                 mvaddch(y, x, '='); // Display damage potion as 'U'
+            } else if (dungeon[currentFloor][y][x] == SNAKE) {
+                mvaddch(y, x, 'S');
+            } else if (dungeon[currentFloor][y][x] == ZOMBIE) {
+                mvaddch(y, x, 'Z');
+            } else if (dungeon[currentFloor][y][x] == VAMPIRE) {
+                mvaddch(y, x, 'E');
+            } else if (dungeon[currentFloor][y][x] == DRAGON) {
+                mvaddch(y, x, 'Y');
+            } else if (dungeon[currentFloor][y][x] == PHANTOM) {
+                mvaddch(y, x, 'P');
             }
         }
     }
@@ -1139,6 +1159,72 @@ void displayPotionInventory(Player *player) {
             break;
         } else {
             break;
+        }
+    }
+}
+
+void addMonster() {
+    for (int i = 0; i < roomCount - 1; i++) {
+        int snakeCount = rand() % 3;
+
+        Room currentRoom = rooms[i];
+
+        int x1 = currentRoom.x_min;
+        int x2 = currentRoom.x_max;
+        int y1 = currentRoom.y_min;
+        int y2 = currentRoom.y_max;
+
+        for (int j = 0; j < snakeCount; j++) {
+            int randX = x1 + 1 + rand() % (x2 - x1 - 2);
+            int randY = y1 + 1 + rand() % (y2 - y1 - 2);
+
+            if (dungeon[currentFloor][randY][randX] == FLOOR) {
+                dungeon[currentFloor][randY][randX] = SNAKE;
+            }
+        }
+
+        int zombieCount = rand() % 3;
+
+        for (int j = 0; j < zombieCount; j++) {
+            int randX = x1 + 1 + rand() % (x2 - x1 - 2);
+            int randY = y1 + 1 + rand() % (y2 - y1 - 2);
+
+            if (dungeon[currentFloor][randY][randX] == FLOOR) {
+                dungeon[currentFloor][randY][randX] = ZOMBIE;
+            }
+        }
+
+        int vampireCount = rand() % 3;
+
+        for (int j = 0; j < vampireCount; j++) {
+            int randX = x1 + 1 + rand() % (x2 - x1 - 2);
+            int randY = y1 + 1 + rand() % (y2 - y1 - 2);
+
+            if (dungeon[currentFloor][randY][randX] == FLOOR) {
+                dungeon[currentFloor][randY][randX] = VAMPIRE;
+            }
+        }
+
+        int phantomCount = rand() % 3;
+
+        for (int j = 0; j < phantomCount; j++) {
+            int randX = x1 + 1 + rand() % (x2 - x1 - 2);
+            int randY = y1 + 1 + rand() % (y2 - y1 - 2);
+
+            if (dungeon[currentFloor][randY][randX] == FLOOR) {
+                dungeon[currentFloor][randY][randX] = PHANTOM;
+            }
+        }
+
+        int dragonCount = rand() % 3;
+
+        for (int j = 0; j < dragonCount; j++) {
+            int randX = x1 + 1 + rand() % (x2 - x1 - 2);
+            int randY = y1 + 1 + rand() % (y2 - y1 - 2);
+
+            if (dungeon[currentFloor][randY][randX] == FLOOR) {
+                dungeon[currentFloor][randY][randX] = DRAGON;
+            }
         }
     }
 }
