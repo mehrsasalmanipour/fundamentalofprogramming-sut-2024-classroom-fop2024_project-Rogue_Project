@@ -445,7 +445,7 @@ void displayDungeon(Player *player) {
                 } else if (dungeon[currentFloor][y][x] == DRAGON) {
                     mvaddch(y, x, 'Y');
                 } else if (dungeon[currentFloor][y][x] == PHANTOM) {
-                    mvaddch(y, x, 'P');
+                    mvaddch(y, x, 'W');
                 }
             } else {
                 mvprintw(1 + dy, 1 + dx, " ");  // Display empty space for out-of-bounds tiles
@@ -534,7 +534,7 @@ void displayEntireDungeon(Player *player) {
             } else if (dungeon[currentFloor][y][x] == DRAGON) {
                 mvaddch(y, x, 'Y');
             } else if (dungeon[currentFloor][y][x] == PHANTOM) {
-                mvaddch(y, x, 'P');
+                mvaddch(y, x, 'W');
             }
         }
     }
