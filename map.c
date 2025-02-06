@@ -363,7 +363,87 @@ void connectRooms(Room rooms[], int roomCount) {
 }
 
 // Function to display the dungeon
-void displayDungeon() {
+void displayDungeon(Player *player) {
+    for (int dy = -2; dy <= 2; dy++) {
+        for (int dx = -2; dx <= 2; dx++) {
+            int x = player->x + dx;
+            int y = player->y + dy;
+
+            if (x >= 0 && x < DUNGEON_WIDTH && y >= 0 && y < DUNGEON_HEIGHT) {
+                if (dungeon[currentFloor][y][x] == WALL) {
+                    mvaddch(y, x, ' ');  // Display walls as ' '
+                } else if (dungeon[currentFloor][y][x] == FLOOR) {
+                    mvaddch(y, x, '.');  // Display empty space as '.'
+                } else if (dungeon[currentFloor][y][x] == CORRIDOR) {
+                    mvaddch(y, x, '#');  // Display corridors as '#'
+                } else if (dungeon[currentFloor][y][x] == DOOR) {
+                    mvaddch(y, x, '+'); // Display doors as '+'
+                } else if (dungeon[currentFloor][y][x] == WALL_V) {
+                    mvaddch(y, x, '|'); // Display wall v as '|'
+                } else if (dungeon[currentFloor][y][x] == WALL_H) {
+                    mvaddch(y, x, '_'); // Display wall h as '_'
+                } else if (dungeon[currentFloor][y][x] == PLAYER) {
+                    if (player->color == 0) {
+                        mvaddch(y, x, 'P');
+                    } else if (player->color == 1) {
+                        attron(COLOR_PAIR(1));
+                        mvaddch(y, x, 'P');
+                        attroff(COLOR_PAIR(1));
+                    } else if (player->color == 2) {
+                        attron(COLOR_PAIR(5));
+                        mvaddch(y, x, 'P');
+                        attroff(COLOR_PAIR(5));
+                    }
+                } else if (dungeon[currentFloor][y][x] == DOWN_STAIR) {
+                    mvaddch(y, x, '<'); // Display down stair as '<'
+                } else if (dungeon[currentFloor][y][x] == UP_STAIR) {
+                    mvaddch(y, x, '>'); // Display up stair as '>'
+                } else if (dungeon[currentFloor][y][x] == COLUMN) {
+                    mvaddch(y, x, 'O'); // Display column as 'O'
+                } else if (dungeon[currentFloor][y][x] == GOLD) {
+                    attron(COLOR_PAIR(4));
+                    mvaddch(y, x, 'G'); // Display gold as 'G'
+                    attroff(COLOR_PAIR(4));
+                } else if (dungeon[currentFloor][y][x] == BLACK_GOLD) {
+                    attron(COLOR_PAIR(5));
+                    mvaddch(y, x, 'B'); // Display black gold as 'B'
+                    attroff(COLOR_PAIR(5));
+                } else if (dungeon[currentFloor][y][x] == TRAP) {
+                    attron((COLOR_PAIR(2)));
+                    mvaddch(y, x, 'T'); // Display trap as 'T'
+                    attroff(COLOR_PAIR(2));
+                } else if (dungeon[currentFloor][y][x] == NORMAL_FOOD) {
+                    mvaddch(y, x, 'F'); // Display normal food as 'F'
+                } else if (dungeon[currentFloor][y][x] == SUPER_FOOD) {
+                    mvaddch(y, x, 'A'); // Display super food as 'A'
+                } else if (dungeon[currentFloor][y][x] == MAGIC_FOOD) {
+                    mvaddch(y, x, 'M'); // Display magic food as 'M'
+                } else if (dungeon[currentFloor][y][x] == MACE) {
+                    mvaddch(y, x, 'Q'); // Display mace as 'Q'
+                } else if (dungeon[currentFloor][y][x] == DAGGER) {
+                    mvaddch(y, x, 'D'); // Display dagger as 'D'
+                } else if (dungeon[currentFloor][y][x] == MAGIC_WAND) {
+                    mvaddch(y, x, 'l'); // Display magic cane as 'l'
+                } else if (dungeon[currentFloor][y][x] == NORMAL_ARROW) {
+                    mvaddch(y, x, 'R'); // Display normal arrow as 'R'
+                } else if (dungeon[currentFloor][y][x] == SWORD) {
+                    mvaddch(y, x, 'J'); // Display sword food as 'J'
+                } else if (dungeon[currentFloor][y][x] == HEALTH_POTION) {
+                    mvaddch(y, x, 'H'); // Display health potion as 'H'
+                } else if (dungeon[currentFloor][y][x] == SPEED_POTION) {
+                    mvaddch(y, x, 'V'); // Display speed potion as 'V'
+                } else if (dungeon[currentFloor][y][x] == DAMAGE_POTION) {
+                    mvaddch(y, x, 'U'); // Display damage potion as 'U'
+                }
+            } else {
+                mvprintw(1 + dy, 1 + dx, " ");  // Display empty space for out-of-bounds tiles
+            }
+        }
+    }
+    refresh();  // Refresh the screen to show the dungeon
+}
+
+void displayEntireDungeon(Player *player) {
     // Render the dungeon using ncurses
     for (int y = 0; y < DUNGEON_HEIGHT; y++) {
         for (int x = 0; x < DUNGEON_WIDTH; x++) {
@@ -380,7 +460,17 @@ void displayDungeon() {
             } else if (dungeon[currentFloor][y][x] == WALL_H) {
                 mvaddch(y, x, '_'); // Display wall h as '_'
             } else if (dungeon[currentFloor][y][x] == PLAYER) {
-                mvaddch(y, x, 'P'); // Display player as 'P'
+                if (player->color == 0) {
+                    mvaddch(y, x, 'P');
+                } else if (player->color == 1) {
+                    attron(COLOR_PAIR(1));
+                    mvaddch(y, x, 'P');
+                    attroff(COLOR_PAIR(1));
+                } else if (player->color == 2) {
+                    attron(COLOR_PAIR(5));
+                    mvaddch(y, x, 'P');
+                    attroff(COLOR_PAIR(5));
+                }
             } else if (dungeon[currentFloor][y][x] == DOWN_STAIR) {
                 mvaddch(y, x, '<'); // Display down stair as '<'
             } else if (dungeon[currentFloor][y][x] == UP_STAIR) {
@@ -404,11 +494,27 @@ void displayDungeon() {
             } else if (dungeon[currentFloor][y][x] == SUPER_FOOD) {
                 mvaddch(y, x, 'A'); // Display super food as 'A'
             } else if (dungeon[currentFloor][y][x] == MAGIC_FOOD) {
-                mvaddch(y, x, 'M'); // Display magic food trap as 'M'
+                mvaddch(y, x, 'M'); // Display magic food as 'M'
+            } else if (dungeon[currentFloor][y][x] == MACE) {
+                mvaddch(y, x, 'Q'); // Display mace as 'Q'
+            } else if (dungeon[currentFloor][y][x] == DAGGER) {
+                mvaddch(y, x, 'D'); // Display dagger as 'D'
+            } else if (dungeon[currentFloor][y][x] == MAGIC_WAND) {
+                mvaddch(y, x, 'l'); // Display magic cane as 'l'
+            } else if (dungeon[currentFloor][y][x] == NORMAL_ARROW) {
+                mvaddch(y, x, 'R'); // Display normal arrow as 'R'
+            } else if (dungeon[currentFloor][y][x] == SWORD) {
+                mvaddch(y, x, 'J'); // Display sword food as 'J'
+            } else if (dungeon[currentFloor][y][x] == HEALTH_POTION) {
+                mvaddch(y, x, 'H'); // Display health potion as 'H'
+            }  else if (dungeon[currentFloor][y][x] == SPEED_POTION) {
+                mvaddch(y, x, 'V'); // Display speed potion as 'V'
+            }  else if (dungeon[currentFloor][y][x] == DAMAGE_POTION) {
+                mvaddch(y, x, 'U'); // Display damage potion as 'U'
             }
         }
     }
-    refresh();  // Refresh the screen to show the dungeon
+    refresh();
 }
 
 // Function to check if all rooms are connected in the Union-Find structure
@@ -744,6 +850,306 @@ void displayInventory(Player *player) {
     }
 }
 
+// Function to initialize weapon in room
+void addWeaponType1() {
+    int randRoom = rand() % roomCount + 1;
+    if (randRoom >= roomCount) {
+        randRoom -= 1;
+    }
+    Room currentRoom = rooms[randRoom];
+
+    int x1 = currentRoom.x_min;
+    int x2 = currentRoom.x_max;
+    int y1 = currentRoom.y_min;
+    int y2 = currentRoom.y_max;
+
+    int randX = x1 + 1 + rand() % (x2 - x1 - 2);
+    int randY = y1 + 1 + rand() % (y2 - y1 - 2);
+
+    dungeon[currentFloor][randY][randX] = MACE;
+
+    randRoom = rand() % roomCount + 1;
+    if (randRoom >= roomCount) {
+        randRoom -= 1;
+    }
+    currentRoom = rooms[randRoom];
+
+    x1 = currentRoom.x_min;
+    x2 = currentRoom.x_max;
+    y1 = currentRoom.y_min;
+    y2 = currentRoom.y_max;
+
+    randX = x1 + 1 + rand() % (x2 - x1 - 2);
+    randY = y1 + 1 + rand() % (y2 - y1 - 2);
+
+    dungeon[currentFloor][randY][randX] = DAGGER;
+
+    randRoom = rand() % roomCount + 1;
+    if (randRoom >= roomCount) {
+        randRoom -= 1;
+    }
+    currentRoom = rooms[randRoom];
+
+    x1 = currentRoom.x_min;
+    x2 = currentRoom.x_max;
+    y1 = currentRoom.y_min;
+    y2 = currentRoom.y_max;
+
+    randX = x1 + 1 + rand() % (x2 - x1 - 2);
+    randY = y1 + 1 + rand() % (y2 - y1 - 2);
+
+    dungeon[currentFloor][randY][randX] = NORMAL_ARROW;
+}
+
+void addWeaponType2() {
+    int randRoom = rand() % roomCount + 1;
+    if (randRoom >= roomCount) {
+        randRoom -= 1;
+    }
+    Room currentRoom = rooms[randRoom];
+
+    int x1 = currentRoom.x_min;
+    int x2 = currentRoom.x_max;
+    int y1 = currentRoom.y_min;
+    int y2 = currentRoom.y_max;
+
+    int randX = x1 + 1 + rand() % (x2 - x1 - 2);
+    int randY = y1 + 1 + rand() % (y2 - y1 - 2);
+
+    dungeon[currentFloor][randY][randX] = MAGIC_WAND;
+
+    randRoom = rand() % roomCount + 1;
+    if (randRoom >= roomCount) {
+        randRoom -= 1;
+    }
+    currentRoom = rooms[randRoom];
+
+    x1 = currentRoom.x_min;
+    x2 = currentRoom.x_max;
+    y1 = currentRoom.y_min;
+    y2 = currentRoom.y_max;
+
+    randX = x1 + 1 + rand() % (x2 - x1 - 2);
+    randY = y1 + 1 + rand() % (y2 - y1 - 2);
+
+    dungeon[currentFloor][randY][randX] = SWORD;
+}
+
+void addWeaponToInventory(Player *player, int type) {
+    player->weaponInventory[player->weaponCount].type = type;
+    player->weaponCount++;
+}
+
+const char* weaponTypeToString(int type) {
+    switch (type) {
+        case 0: return "Mace";
+        case 1: return "Dagger";
+        case 2: return "Magic Cane";
+        case 3: return "Arrow";
+        case 4: return "Sword";
+        default: return "Unknown Weapon";
+    }
+}
+
+void displayWeaponInventory(Player *player) {
+    int pos = 0;  // Current position in the inventory
+
+    while (true) {
+        clear();  // Clear the screen to display the inventory
+
+        mvprintw(0, 0, "Player Inventory:");
+        for (int i = 0; i < player->weaponCount; i++) {
+            if (i == pos) {
+                mvprintw(i + 1, 0, "> %s", weaponTypeToString(player->weaponInventory[i].type));  // Highlight the selected item
+            } else {
+                mvprintw(i + 1, 0, "  %s", weaponTypeToString(player->weaponInventory[i].type));
+            }
+        }
+
+        if (player->weaponCount == 0) {
+            mvprintw(1, 0, "Inventory is empty.");
+        }
+
+        mvprintw(player->weaponCount + 3, 0, "Use arrow keys to navigate and Enter to select.");
+        mvprintw(player->weaponCount + 4, 0, "Press any other key to return.");
+        refresh();  // Refresh the screen to show the inventory
+
+        int input = getch();  // Wait for the player to press a key
+
+        if (input == KEY_UP) {  // Handle up arrow key
+            if (pos > 0) {
+                pos--;
+            }
+        } else if (input == KEY_DOWN) {  // Handle down arrow key
+            if (pos < player->weaponCount - 1) {
+                pos++;
+            }
+        } else if (input == '\n') {  // Handle Enter key
+            //code
+            break;
+        }
+        else {
+            break;  // Exit the inventory menu on any other key
+        }
+    }
+}
+
+void addPotion() {
+    for (int i = 0; i < roomCount - 1; i++) {
+        int healthPotionCount = rand() % 3;
+
+        Room currentRoom = rooms[i];
+
+        int x1 = currentRoom.x_min;
+        int x2 = currentRoom.x_max;
+        int y1 = currentRoom.y_min;
+        int y2 = currentRoom.y_max;
+
+        for (int j = 0; j < healthPotionCount; j++) {
+            int randX = x1 + 1 + rand() % (x2 - x1 - 2);
+            int randY = y1 + 1 + rand() % (y2 - y1 - 2);
+
+            if (dungeon[currentFloor][randY][randX] == FLOOR) {
+                dungeon[currentFloor][randY][randX] = HEALTH_POTION;
+            }
+        }
+
+        int speedPotionCount = rand() % 3;
+
+        for (int j = 0; j < speedPotionCount; j++) {
+            int randX = x1 + 1 + rand() % (x2 - x1 - 2);
+            int randY = y1 + 1 + rand() % (y2 - y1 - 2);
+
+            if (dungeon[currentFloor][randY][randX] == FLOOR) {
+                dungeon[currentFloor][randY][randX] = SPEED_POTION;
+            }
+        }
+
+        int damagePotionCount = rand() % 3;
+
+        for (int j = 0; j < damagePotionCount; j++) {
+            int randX = x1 + 1 + rand() % (x2 - x1 - 2);
+            int randY = y1 + 1 + rand() % (y2 - y1 - 2);
+
+            if (dungeon[currentFloor][randY][randX] == FLOOR) {
+                dungeon[currentFloor][randY][randX] = DAMAGE_POTION;
+            }
+        }
+    }
+}
+
+void addPotionToInventory(Player *player, int type) {
+    player->potionInventory[player->potionCount].type = type;
+    player->potionCount++;
+}
+
+const char* potionTypeToString(int type) {
+    switch (type) {
+        case 0: return "Health Potion";
+        case 1: return "Speed Potion";
+        case 2: return "Damage Potion";
+        default: return "Unknown Potion";
+    }
+}
+
+void displayPotionInventory(Player *player) {
+    int pos = 0;  // Current position in the inventory
+
+    while (true) {
+        clear();  // Clear the screen to display the inventory
+
+        mvprintw(0, 0, "Player Inventory:");
+        for (int i = 0; i < player->potionCount; i++) {
+            if (i == pos) {
+                mvprintw(i + 1, 0, "> %s", potionTypeToString(player->potionInventory[i].type));  // Highlight the selected item
+            } else {
+                mvprintw(i + 1, 0, "  %s", potionTypeToString(player->potionInventory[i].type));
+            }
+        }
+
+        if (player->potionCount == 0) {
+            mvprintw(1, 0, "Inventory is empty.");
+        }
+
+        mvprintw(player->potionCount + 3, 0, "Use arrow keys to navigate and Enter to select.");
+        mvprintw(player->potionCount + 4, 0, "Press any other key to return.");
+        refresh();  // Refresh the screen to show the inventory
+
+        int input = getch();  // Wait for the player to press a key
+
+        if (input == KEY_UP) {  // Handle up arrow key
+            if (pos > 0) {
+                pos--;
+            }
+        } else if (input == KEY_DOWN) {  // Handle down arrow key
+            if (pos < player->potionCount - 1) {
+                pos++;
+            }
+        } else if (input == '\n') {  // Handle Enter key
+            if (player->potionInventory[pos].type == 0) {
+                player->health = 100;
+                if (pos >= 0 && pos < player->potionCount) {
+                    for (int j = pos; j < player->potionCount - 1; j++) {
+                        player->potionInventory[j] = player->potionInventory[j + 1];
+                    }
+                    player->potionCount--;
+                }
+            }
+            break;
+        } else {
+            break;
+        }
+    }
+}
+
+void playerColor(Player *player) {
+    int pos = 0;  // Current position in the inventory
+
+    while (true) {
+        clear();  // Clear the screen to display the inventory
+
+        mvprintw(0, 0, "Player Color:");
+
+        if (pos == 0) {
+            mvprintw(1, 0, "> Default");  // Highlight the selected item
+        } else {
+            mvprintw(1, 0, "  Default");
+        }
+        if (pos == 1) {
+            mvprintw(2, 0, "> Magenta");  // Highlight the selected item
+        } else {
+            mvprintw(2, 0, "  Magenta");
+        }
+        if (pos == 2) {
+            mvprintw(3, 0, "> Cyan");
+        } else {
+            mvprintw(3, 0, "  Cyan");
+        }
+
+        mvprintw(4, 0, "Use arrow keys to navigate and Enter to select.");
+        mvprintw(5, 0, "Press any other key to return.");
+        refresh();  // Refresh the screen to show the inventory
+
+        int input = getch();  // Wait for the player to press a key
+
+        if (input == KEY_UP) {  // Handle up arrow key
+            if (pos > 0) {
+                pos--;
+            }
+        } else if (input == KEY_DOWN) {  // Handle down arrow key
+            if (pos < 2) {
+                pos++;
+            }
+        } else if (input == '\n') {  // Handle Enter key
+            player->color = pos;
+            break;
+        }
+        else {
+            break;  // Exit the inventory menu on any other key
+        }
+    }
+}
+
 void movePlayer(Player *player, int newX, int newY) {
     // Check if the new position is within bounds and not a wall
     if (newX >= 0 && newX < DUNGEON_WIDTH && newY >= 0 && newY < DUNGEON_HEIGHT) {
@@ -757,7 +1163,15 @@ void movePlayer(Player *player, int newX, int newY) {
             dungeon[currentFloor][newY][newX] == TRAP ||
             dungeon[currentFloor][newY][newX] == NORMAL_FOOD ||
             dungeon[currentFloor][newY][newX] == MAGIC_FOOD ||
-            dungeon[currentFloor][newY][newX] == SUPER_FOOD) {
+            dungeon[currentFloor][newY][newX] == SUPER_FOOD ||
+            dungeon[currentFloor][newY][newX] == MACE ||
+            dungeon[currentFloor][newY][newX] == DAGGER ||
+            dungeon[currentFloor][newY][newX] == MAGIC_WAND ||
+            dungeon[currentFloor][newY][newX] == NORMAL_ARROW ||
+            dungeon[currentFloor][newY][newX] == SWORD ||
+            dungeon[currentFloor][newY][newX] == HEALTH_POTION ||
+            dungeon[currentFloor][newY][newX] == SPEED_POTION ||
+            dungeon[currentFloor][newY][newX] == DAMAGE_POTION) {
 
             if (copyDungeon[currentFloor][player->y][player->x] == DOOR) {
                 if ((dungeon[currentFloor][newY][newX] == FLOOR ||
@@ -862,6 +1276,24 @@ void movePlayer(Player *player, int newX, int newY) {
                     player->y = newY;
                     dungeon[currentFloor][player->y][player->x] = PLAYER;
                 }
+            } else if (dungeon[currentFloor][newY][newX] == HEALTH_POTION) {
+                addPotionToInventory(player, 0);
+                dungeon[currentFloor][player->y][player->x] = copyDungeon[currentFloor][player->y][player->x];
+                player->x = newX;
+                player->y = newY;
+                dungeon[currentFloor][player->y][player->x] = PLAYER;
+            } else if (dungeon[currentFloor][newY][newX] == SPEED_POTION) {
+                addPotionToInventory(player, 1);
+                dungeon[currentFloor][player->y][player->x] = copyDungeon[currentFloor][player->y][player->x];
+                player->x = newX;
+                player->y = newY;
+                dungeon[currentFloor][player->y][player->x] = PLAYER;
+            } else if (dungeon[currentFloor][newY][newX] == DAMAGE_POTION) {
+                addPotionToInventory(player, 2);
+                dungeon[currentFloor][player->y][player->x] = copyDungeon[currentFloor][player->y][player->x];
+                player->x = newX;
+                player->y = newY;
+                dungeon[currentFloor][player->y][player->x] = PLAYER;
             } else {
                 // Clear the previous position
                 dungeon[currentFloor][player->y][player->x] = copyDungeon[currentFloor][player->y][player->x];
@@ -877,6 +1309,54 @@ void movePlayer(Player *player, int newX, int newY) {
     }
 }
 
+void saveGame(Player *player) {
+    FILE *file = fopen("savegame.dat", "wb");  // Open the file in binary write mode
+    if (!file) {
+        snprintf(message, sizeof(message), "Failed to save the game!");
+        return;
+    }
+
+    // Save dungeon tiles
+    for (int y = 0; y < DUNGEON_HEIGHT; y++) {
+        for (int x = 0; x < DUNGEON_WIDTH; x++) {
+            fwrite(&dungeon[currentFloor][y][x], sizeof(char), 1, file);
+        }
+    }
+
+    // Save player data
+    fwrite(player, sizeof(Player), 1, file);
+
+    // Save current floor
+    fwrite(&currentFloor, sizeof(int), 1, file);
+
+    fclose(file);  // Close the file
+    snprintf(message, sizeof(message), "Game saved successfully!");
+}
+
+void loadGame(Player *player) {
+    FILE *file = fopen("savegame.dat", "rb");  // Open the file in binary read mode
+    if (!file) {
+        snprintf(message, sizeof(message), "Failed to load the game!");
+        return;
+    }
+
+    // Load dungeon tiles
+    for (int y = 0; y < DUNGEON_HEIGHT; y++) {
+        for (int x = 0; x < DUNGEON_WIDTH; x++) {
+            fread(&dungeon[currentFloor][y][x], sizeof(char), 1, file);
+        }
+    }
+
+    // Load player data
+    fread(player, sizeof(Player), 1, file);
+
+    // Load current floor
+    fread(&currentFloor, sizeof(int), 1, file);
+
+    fclose(file);  // Close the file
+    snprintf(message, sizeof(message), "Game loaded successfully!");
+}
+
 void handleInput(Player *player, int *running) {
     int ch = getch();  // Get user input
     snprintf(message, sizeof(message), " ");
@@ -890,8 +1370,42 @@ void handleInput(Player *player, int *running) {
         case '9': case 'u': movePlayer(player, player->x + 1, player->y - 1); checkFoodSpoilage(player); break;
         case '1': case 'b': movePlayer(player, player->x - 1, player->y + 1); checkFoodSpoilage(player); break;
         case '3': case 'n': movePlayer(player, player->x + 1, player->y + 1); checkFoodSpoilage(player); break;
+        case 'x':
+            if (copyDungeon[currentFloor][player ->y][player->x] == MACE) {
+                copyDungeon[currentFloor][player->y][player->x] = FLOOR;
+                addWeaponToInventory(player, 0);
+            } else if (copyDungeon[currentFloor][player ->y][player->x] == DAGGER) {
+                copyDungeon[currentFloor][player->y][player->x] = FLOOR;
+                addWeaponToInventory(player, 1);
+            } else if (copyDungeon[currentFloor][player ->y][player->x] == MAGIC_WAND) {
+                copyDungeon[currentFloor][player->y][player->x] = FLOOR;
+                addWeaponToInventory(player, 2);
+            } else if (copyDungeon[currentFloor][player ->y][player->x] == NORMAL_ARROW) {
+                copyDungeon[currentFloor][player->y][player->x] = FLOOR;
+                addWeaponToInventory(player, 3);
+            } else if (copyDungeon[currentFloor][player ->y][player->x] == SWORD) {
+                copyDungeon[currentFloor][player->y][player->x] = FLOOR;
+                addWeaponToInventory(player, 4);
+            }
+            break;
         case 'f':
             displayInventory(player);
+            break;
+        case 'w':
+            displayWeaponInventory(player);
+            break;
+        case 'p':
+            displayPotionInventory(player);
+            break;
+        case 'm':
+            displayEntireDungeon(player);
+            getch();
+            break;
+        case 'c':
+            playerColor(player);
+            break;
+        case 's':
+            saveGame(player);
             break;
         case 'q':  // Quit the game if 'q' is pressed
             *running = 0;  // Set running to 0 to break the loop
