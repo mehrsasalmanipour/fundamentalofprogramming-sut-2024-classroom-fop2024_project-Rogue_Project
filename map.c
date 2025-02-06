@@ -1407,8 +1407,60 @@ void handleInput(Player *player, int *running) {
         case 's':
             saveGame(player);
             break;
-        case 'z':
-            loadGame(player);
+        case 'q':  // Quit the game if 'q' is pressed
+            *running = 0;  // Set running to 0 to break the loop
+            break;
+        default:
+            break;  // No movement
+    }
+}
+
+void handleGuestInput(Player *player, int *running) {
+    int ch = getch();  // Get user input
+    snprintf(message, sizeof(message), " ");
+
+    switch (ch) {
+        case '8': case 'j': movePlayer(player, player->x, player->y - 1); checkFoodSpoilage(player); break;
+        case '2': case 'k': movePlayer(player, player->x, player->y + 1); checkFoodSpoilage(player); break;
+        case '4': case 'h': movePlayer(player, player->x - 1, player->y); checkFoodSpoilage(player); break;
+        case '6': case 'l': movePlayer(player, player->x + 1, player->y); checkFoodSpoilage(player); break;
+        case '7': case 'y': movePlayer(player, player->x - 1, player->y - 1); checkFoodSpoilage(player); break;
+        case '9': case 'u': movePlayer(player, player->x + 1, player->y - 1); checkFoodSpoilage(player); break;
+        case '1': case 'b': movePlayer(player, player->x - 1, player->y + 1); checkFoodSpoilage(player); break;
+        case '3': case 'n': movePlayer(player, player->x + 1, player->y + 1); checkFoodSpoilage(player); break;
+        case 'x':
+            if (copyDungeon[currentFloor][player ->y][player->x] == MACE) {
+                copyDungeon[currentFloor][player->y][player->x] = FLOOR;
+                addWeaponToInventory(player, 0);
+            } else if (copyDungeon[currentFloor][player ->y][player->x] == DAGGER) {
+                copyDungeon[currentFloor][player->y][player->x] = FLOOR;
+                addWeaponToInventory(player, 1);
+            } else if (copyDungeon[currentFloor][player ->y][player->x] == MAGIC_WAND) {
+                copyDungeon[currentFloor][player->y][player->x] = FLOOR;
+                addWeaponToInventory(player, 2);
+            } else if (copyDungeon[currentFloor][player ->y][player->x] == NORMAL_ARROW) {
+                copyDungeon[currentFloor][player->y][player->x] = FLOOR;
+                addWeaponToInventory(player, 3);
+            } else if (copyDungeon[currentFloor][player ->y][player->x] == SWORD) {
+                copyDungeon[currentFloor][player->y][player->x] = FLOOR;
+                addWeaponToInventory(player, 4);
+            }
+            break;
+        case 'f':
+            displayInventory(player);
+            break;
+        case 'w':
+            displayWeaponInventory(player);
+            break;
+        case 'p':
+            displayPotionInventory(player);
+            break;
+        case 'm':
+            displayEntireDungeon(player);
+            getch();
+            break;
+        case 'c':
+            playerColor(player);
             break;
         case 'q':  // Quit the game if 'q' is pressed
             *running = 0;  // Set running to 0 to break the loop
