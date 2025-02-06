@@ -323,6 +323,8 @@ void pregameMenu() {
 
                     connectRooms(rooms, roomCount);
 
+                    addWindow();
+
                     placeStairs();
 
                     addColumns();
@@ -344,6 +346,8 @@ void pregameMenu() {
                     }
 
                     addGold();
+
+                    addMonster();
 
                     addTraps();
 
