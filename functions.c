@@ -7,7 +7,6 @@
 #include <time.h>
 #include "functions.h"
 
-
 void drawMenu(const char *menuItems[], int menuSize, int highlight) {
     clear();
     int termHight, termWidth;
@@ -259,7 +258,8 @@ int login() {
 }
 
 void pregameMenu() {
-    const char *menuItems[] = {"Saved Game", "New Game", "Continue Previous Games", "Top Players", "Settings", "Back"};
+    Player player;
+    const char *menuItems[] = {"Continue Previous Games", "New Game", "Profile", "Top Players", "Settings", "Back"};
     const int menuSize = sizeof(menuItems) / sizeof(menuItems[0]);
     int highlight = 0;
     int ch;
@@ -277,10 +277,20 @@ void pregameMenu() {
             break;
         case 10:
             if (highlight == 0) {
-                //loadGame(&player);
+                loadGame(&player);
+                displayDungeon(&player);
+
+                int running = 1;
+                while (running) {
+                    clear();  // Clear the screen first
+                    mvprintw(DUNGEON_HEIGHT, 0, "Gold: %d | Health: %d", player.gold, player.health);
+                    mvprintw(DUNGEON_HEIGHT + 2, 0, "Message: %s", message);
+                    displayDungeon(&player);  // Display the dungeon
+                    refresh();  // Refresh the screen to show the updates
+                    handleInput(&player, &running);  // Handle player input
+                }
             } else if (highlight == 1) {
                 staircaseCount = 0;
-                Player player;
                 player.color = 0;
                 player.gold = 0;
                 player.health = 100;
