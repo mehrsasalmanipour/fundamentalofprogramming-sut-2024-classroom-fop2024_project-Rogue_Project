@@ -41,7 +41,7 @@
 #define ZOMBIE 'Z'
 #define VAMPIRE 'E'
 #define DRAGON 'Y'
-#define PHANTOM 'P'
+#define PHANTOM 'W'
 
 // menu and login
 void drawMenu(const char *menuItems[], int menuSize, int highlight);
