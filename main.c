@@ -96,7 +96,7 @@ int main() {
                 mvprintw(DUNGEON_HEIGHT + 2, 0, "Message: %s", message);
                 displayDungeon(&player);  // Display the dungeon
                 refresh();  // Refresh the screen to show the updates
-                handleInput(&player, &running);  // Handle player input
+                handleGuestInput(&player, &running);  // Handle player input
             }
 
         } else if (mainChoice == 3) {
