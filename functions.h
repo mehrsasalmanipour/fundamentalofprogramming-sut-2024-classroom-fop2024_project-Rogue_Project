@@ -6,7 +6,7 @@
 // Define the dungeon grid size
 #define DUNGEON_WIDTH 120
 #define DUNGEON_HEIGHT 40
-#define FLOORS_NUM 2
+#define FLOORS_NUM 5
 
 #define MAX_ROOMS 10
 #define MAX_FOOD_ITEMS 5
