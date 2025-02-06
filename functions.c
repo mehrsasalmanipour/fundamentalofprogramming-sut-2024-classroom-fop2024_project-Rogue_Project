@@ -282,6 +282,18 @@ void pregameMenu() {
 
                 int running = 1;
                 while (running) {
+                    if (player.health <= 0) {
+                        clear();
+                        mvprintw(1, 1, "You Lost!");
+                        getch();
+                        break;
+                    }
+                    if (player.gold >= 50) {
+                        clear();
+                        mvprintw(1, 1, "You Won!");
+                        getch();
+                        break;
+                    }
                     clear();  // Clear the screen first
                     mvprintw(DUNGEON_HEIGHT, 0, "Gold: %d | Health: %d", player.gold, player.health);
                     mvprintw(DUNGEON_HEIGHT + 2, 0, "Message: %s", message);
@@ -345,6 +357,18 @@ void pregameMenu() {
 
                 int running = 1;
                 while (running) {
+                    if (player.health <= 0) {
+                        clear();
+                        mvprintw(1, 1, "You Lost!");
+                        getch();
+                        break;
+                    }
+                    if (player.gold >= 50) {
+                        clear();
+                        mvprintw(1, 1, "You Won!");
+                        getch();
+                        break;
+                    }
                     clear();  // Clear the screen first
                     mvprintw(DUNGEON_HEIGHT, 0, "Gold: %d | Health: %d", player.gold, player.health);
                     mvprintw(DUNGEON_HEIGHT + 2, 0, "Message: %s", message);
