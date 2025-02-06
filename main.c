@@ -37,38 +37,68 @@ int main() {
         } else if (mainChoice == 2) {
             staircaseCount = 0;
             Player player;
+            player.color = 0;
             player.gold = 0;
             player.health = 100;
             player.hunger = 0;
+            player.foodCount = 0;
+            player.weaponCount = 0;
+            player.potionCount = 0;
 
             while(currentFloor < FLOORS_NUM) {
                 roomCount = 0;
+                // Initialize dungeon with walls
                 initDungeon();
+                // Define the entire dungeon area to split (from (0,0) to (DUNGEON_WIDTH, DUNGEON_HEIGHT))
                 Rect fullDungeon = {0, DUNGEON_WIDTH, 0, DUNGEON_HEIGHT};
+                // Split the dungeon recursively
                 splitDungeon(fullDungeon);
+
                 connectRooms(rooms, roomCount);
+
                 placeStairs();
+
                 addColumns();
+
                 addFood();
+
+                if (currentFloor == 0) {
+                    addWeaponType1();
+                }
+
+                if (currentFloor == 1) {
+                    addWeaponType2();
+                }
+
                 copyDung();
-                addGold();
-                addTraps();
+
                 if (currentFloor == 0) {
                     placePlayerInFirstRoom(&player);
                 }
+
+                addGold();
+
+                addTraps();
+
+                addPotion();
+
                 currentFloor++;
             }
+
             currentFloor = 0;
-            displayDungeon();
+
+            displayDungeon(&player);
+
             int running = 1;
             while (running) {
-                clear();
+                clear();  // Clear the screen first
                 mvprintw(DUNGEON_HEIGHT, 0, "Gold: %d | Health: %d", player.gold, player.health);
                 mvprintw(DUNGEON_HEIGHT + 2, 0, "Message: %s", message);
-                displayDungeon();
-                refresh();
-                handleInput(&player, &running);
+                displayDungeon(&player);  // Display the dungeon
+                refresh();  // Refresh the screen to show the updates
+                handleInput(&player, &running);  // Handle player input
             }
+
         } else if (mainChoice == 3) {
             break;
         }
