@@ -7,6 +7,8 @@
 #include <time.h>
 #include "functions.h"
 
+char usName[MAX];
+
 void drawMenu(const char *menuItems[], int menuSize, int highlight) {
     clear();
     int termHight, termWidth;
@@ -244,6 +246,7 @@ int login() {
     fclose(file);
 
     if (loginSuccess) {
+        snprintf(usName, sizeof(usName), "Welcome, %s!", username);
         attron(COLOR_PAIR(3));
         mvprintw(9, 10, "Login successful! Welcome, %s!", username);
         attroff(COLOR_PAIR(3));
@@ -259,7 +262,7 @@ int login() {
 
 void pregameMenu() {
     Player player;
-    const char *menuItems[] = {"Continue Previous Games", "New Game", "Profile", "Top Players", "Settings", "Back"};
+    const char *menuItems[] = {"Continue Previous Game", "New Game", "Profile", "Top Players", "Settings", "Back"};
     const int menuSize = sizeof(menuItems) / sizeof(menuItems[0]);
     int highlight = 0;
     int ch;
@@ -382,11 +385,58 @@ void pregameMenu() {
                     handleInput(&player, &running);  // Handle player input
                 }
             } else if (highlight == 2) {
-                //code
+                clear();
+                mvprintw(1, 1, "%s", usName);
+                getch();
+                break;
             } else if (highlight == 3) {
                 //code
             } else if (highlight == 4) {
-                //code
+                clear();
+                int pos = 1;  // Current position in the inventory
+
+                while (true) {
+                    clear();  // Clear the screen to display the inventory
+
+                    mvprintw(0, 0, "Game Difficulty:");
+
+                    if (pos == 0) {
+                        mvprintw(1, 0, "> Easy");
+                    } else {
+                        mvprintw(1, 0, "  Easy");
+                    }
+                    if (pos == 1) {
+                        mvprintw(2, 0, "> Normal");
+                    } else {
+                        mvprintw(2, 0, "  Normal");
+                    }
+                    if (pos == 2) {
+                        mvprintw(3, 0, "> Hard");
+                    } else {
+                        mvprintw(3, 0, "  Hard");
+                    }
+
+                    mvprintw(4, 0, "Use arrow keys to navigate and Enter to select.");
+                    mvprintw(5, 0, "Press any other key to return.");
+                    refresh();  // Refresh the screen to show the inventory
+
+                    int input = getch();  // Wait for the player to press a key
+
+                    if (input == KEY_UP) {  // Handle up arrow key
+                        if (pos > 0) {
+                            pos--;
+                        }
+                    } else if (input == KEY_DOWN) {  // Handle down arrow key
+                        if (pos < 2) {
+                            pos++;
+                        }
+                    } else if (input == '\n') {  // Handle Enter key
+                        break;
+                    }
+                    else {
+                        break;  // Exit the inventory menu on any other key
+                    }
+                }
             } else if (highlight == 5) {
                 return;
             }
