@@ -1407,6 +1407,9 @@ void handleInput(Player *player, int *running) {
         case 's':
             saveGame(player);
             break;
+        case 'z':
+            loadGame(player);
+            break;
         case 'q':  // Quit the game if 'q' is pressed
             *running = 0;  // Set running to 0 to break the loop
             break;
