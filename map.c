@@ -579,7 +579,7 @@ void placeStairs() {
 
         Staircase newStaircase;
 
-        if (currentFloor == 0) {
+        if (currentFloor < FLOORS_NUM - 1) {
             int x1 = lastRoom.x_min;
             int x2 = lastRoom.x_max;
             int y1 = lastRoom.y_min;
@@ -599,7 +599,7 @@ void placeStairs() {
                 dungeon[currentFloor][randY][randX] = UP_STAIR;
             }
 
-        } else if (currentFloor == 1) {
+        } else if (currentFloor > 0) {
             int x1 = firstRoom.x_min;
             int x2 = firstRoom.x_max;
             int y1 = firstRoom.y_min;
