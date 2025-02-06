@@ -262,6 +262,7 @@ int login() {
 
 void pregameMenu() {
     Player player;
+    player.gold = 0;
     const char *menuItems[] = {"Continue Previous Game", "New Game", "Profile", "Top Players", "Settings", "Back"};
     const int menuSize = sizeof(menuItems) / sizeof(menuItems[0]);
     int highlight = 0;
@@ -288,12 +289,14 @@ void pregameMenu() {
                     if (player.health <= 0) {
                         clear();
                         mvprintw(1, 1, "You Lost!");
+                        saveGame(&player);
                         getch();
                         break;
                     }
                     if (player.gold >= 50) {
                         clear();
                         mvprintw(1, 1, "You Won!");
+                        saveGame(&player);
                         getch();
                         break;
                     }
@@ -368,12 +371,14 @@ void pregameMenu() {
                     if (player.health <= 0) {
                         clear();
                         mvprintw(1, 1, "You Lost!");
+                        saveGame(&player);
                         getch();
                         break;
                     }
                     if (player.gold >= 50) {
                         clear();
                         mvprintw(1, 1, "You Won!");
+                        saveGame(&player);
                         getch();
                         break;
                     }
@@ -387,6 +392,7 @@ void pregameMenu() {
             } else if (highlight == 2) {
                 clear();
                 mvprintw(1, 1, "%s", usName);
+                mvprintw(2, 1, "Gold: %d", player.gold);
                 getch();
                 break;
             } else if (highlight == 3) {
